@@ -16,7 +16,7 @@ const dimensions: Dimension[] = [
 ];
 
 const likertLabels = ["전혀 그렇지 않다", "그렇지 않다", "보통이다", "그렇다", "매우 그렇다"];
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUeWT8sggLlqToxO1IOC7kXSu5JaFG5TX5nmVFwuyKGz31vZ5mmFS-svn_ztLLw8c/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6EMz4q7K0XEKyecok5JbZTguxO64RHaXZkYrPjzvuwpPJIUmWEjAlsh2JNPSy_RE0/exec";
 const blankAnswers = () => Object.fromEntries(dimensions.flatMap((dimension) => dimension.items.map((_, index) => [`${dimension.id}-${index}`, 0])));
 const radarPoints = (values: number[], radius = 42) => values.map((value, index) => { const angle = -Math.PI / 2 + (Math.PI * 2 * index) / values.length; const r = radius * value / 100; return `${50 + Math.cos(angle) * r},${50 + Math.sin(angle) * r}`; }).join(" ");
 
