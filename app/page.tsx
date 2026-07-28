@@ -84,10 +84,10 @@ export default function Home() {
   function setAnswer(dimensionId: string, itemIndex: number, score: number) { setAnswersByPeriod((current) => ({ ...current, [activePeriod]: { ...current[activePeriod], [`${dimensionId}-${itemIndex}`]: score } })); }
   function resetPeriod() { setAnswersByPeriod((current) => ({ ...current, [activePeriod]: blankAnswers() })); }
   async function saveToSheet() {
-    if (!recordName.trim()) { setSaveState("error"); return; }
+    if (!teacherName.trim()) { setSaveState("error"); return; }
     setSaveState("saving");
     const averages = Object.fromEntries(skills.map((skill) => [skill.id, Number((skill.value / 20).toFixed(2))]));
-    const payload = { name: recordName.trim(), school: school.trim(), position: position.trim(), memo: memo.trim(), period: activePeriod === "october" ? "10월" : "1월", submittedAt: new Date().toISOString(), averages, answers };
+    const payload = { name: teacherName.trim(), period: activePeriod === "october" ? "10월" : "1월", submittedAt: new Date().toISOString(), averages, answers };
     try { await fetch(APPS_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) }); setSaveState("saved"); } catch { setSaveState("error"); }
   }
 
