@@ -2,90 +2,152 @@
 
 import { useMemo, useState } from "react";
 
-type Skill = { label: string; short: string; value: number; color: string };
-
-const presets: Record<string, Skill[]> = {
-  "교사 역량 6각": [
-    { label: "수업 설계", short: "수업\n설계", value: 82, color: "#e86a33" },
-    { label: "디지털 활용", short: "디지털\n활용", value: 68, color: "#f1b64a" },
-    { label: "학생 이해", short: "학생\n이해", value: 76, color: "#71a981" },
-    { label: "평가·피드백", short: "평가·\n피드백", value: 61, color: "#4d8db5" },
-    { label: "협업·소통", short: "협업·\n소통", value: 88, color: "#7568ae" },
-    { label: "성찰·성장", short: "성찰·\n성장", value: 73, color: "#d4779b" },
-  ],
-  "핵심 역량 5각": [
-    { label: "전문성", short: "전문성", value: 84, color: "#e86a33" },
-    { label: "수업 혁신", short: "수업\n혁신", value: 68, color: "#f1b64a" },
-    { label: "관계 형성", short: "관계\n형성", value: 78, color: "#71a981" },
-    { label: "교육 실천", short: "교육\n실천", value: 65, color: "#4d8db5" },
-    { label: "자기 계발", short: "자기\n계발", value: 72, color: "#7568ae" },
-  ],
+type Dimension = {
+  id: string;
+  label: string;
+  short: string;
+  color: string;
+  items: string[];
 };
 
-function points(count: number, values: number[], radius = 42, center = 50) {
+const dimensions: Dimension[] = [
+  {
+    id: "learning",
+    label: "학습지도 역량",
+    short: "학습지도",
+    color: "#e86a33",
+    items: [
+      "수업교재 연구를 충실히 하는가?",
+      "학생 수준에 적합한 수업계획을 수립하는가?",
+      "학생의 능력과 수준에 적합한 질문을 제시하는가?",
+      "학생들을 학습활동이나 과제 수행에 적절히 참여시키는가?",
+      "학생의 이해도와 참여도를 수시로 점검하는가?",
+      "평가 결과를 수업개선을 위한 자료로 적극 활용하는가?",
+    ],
+  },
+  {
+    id: "guidance",
+    label: "생활지도 역량",
+    short: "생활지도",
+    color: "#f1b64a",
+    items: [
+      "학생 개개인의 특성을 파악하기 위하여 노력하는가?",
+      "학생들이 학급에서 친구들과 잘 어울려 생활하도록 지도하는가?",
+      "안전사고 및 학교폭력을 예방하기 위한 교육을 실시하는가?",
+      "학생들이 올바른 기본생활습관을 기르도록 지도하는가?",
+    ],
+  },
+  {
+    id: "professional",
+    label: "전문성 개발 역량",
+    short: "전문성 개발",
+    color: "#71a981",
+    items: [
+      "교사 연구회 혹은 연구 모임에 적극적으로 참여하여 새롭게 학습한 지식이나 경험을 수업과 생활지도에 반영하는가?",
+      "다양한 교사 연수에 적극적으로 참여하여 교육환경 변화에 맞춰 교육 자료를 재구성하는가?",
+    ],
+  },
+  {
+    id: "smart",
+    label: "미래스마트형 역량",
+    short: "미래스마트",
+    color: "#4d8db5",
+    items: ["학생 특성과 요구에 적합한 수업자료 및 매체(에듀테크, AI 등)를 적극적으로 활용하는가?"],
+  },
+  {
+    id: "culture",
+    label: "예술문화형 역량",
+    short: "예술문화",
+    color: "#7568ae",
+    items: ["학생의 적성과 특기를 고려하여 예술·문화·진로 및 창의적인 표현 활동의 기회를 제공하는가?"],
+  },
+  {
+    id: "empathy",
+    label: "소통공감형 역량",
+    short: "소통공감",
+    color: "#d4779b",
+    items: ["독서, 토의·토론, 협동학습 등으로 상호작용을 촉진하고, 공감적 상담을 통해 학생의 당면 문제를 지원하는가?"],
+  },
+  {
+    id: "whole",
+    label: "전인적 성장 역량",
+    short: "전인적 성장",
+    color: "#8b9b63",
+    items: ["체육, 놀이 등 다양한 활동을 바탕으로 건전한 가치관과 도덕성을 갖춘 전인적 성장을 지도하는가?"],
+  },
+];
+
+const likertLabels = ["전혀 그렇지 않다", "그렇지 않다", "보통이다", "그렇다", "매우 그렇다"];
+
+function radarPoints(values: number[], radius = 42) {
+  const count = values.length;
   return values.map((value, index) => {
     const angle = -Math.PI / 2 + (Math.PI * 2 * index) / count;
-    const r = (radius * value) / 100;
-    return `${center + Math.cos(angle) * r},${center + Math.sin(angle) * r}`;
+    const r = radius * value / 100;
+    return `${50 + Math.cos(angle) * r},${50 + Math.sin(angle) * r}`;
   }).join(" ");
 }
 
-function Radar({ skills }: { skills: Skill[] }) {
+function Radar({ skills }: { skills: Array<Dimension & { value: number }> }) {
+  const values = skills.map((skill) => skill.value);
   const count = skills.length;
-  const outer = points(count, skills.map(() => 100));
-  const rings = [25, 50, 75, 100];
   return (
-    <div className="radar-wrap" aria-label="역량 레이더 그래프">
+    <div className="radar-wrap" aria-label="7개 교원 역량 레이더 그래프">
       <svg viewBox="0 0 100 100" role="img">
-        {rings.map((ring) => <polygon key={ring} points={points(count, skills.map(() => ring))} className="grid-ring" />)}
-        {skills.map((_, i) => {
-          const angle = -Math.PI / 2 + (Math.PI * 2 * i) / count;
-          return <line key={i} x1="50" y1="50" x2={50 + Math.cos(angle) * 42} y2={50 + Math.sin(angle) * 42} className="grid-line" />;
+        {[20, 40, 60, 80, 100].map((ring) => <polygon key={ring} points={radarPoints(values.map(() => ring))} className="grid-ring" />)}
+        {values.map((_, index) => {
+          const angle = -Math.PI / 2 + (Math.PI * 2 * index) / count;
+          return <line key={index} x1="50" y1="50" x2={50 + Math.cos(angle) * 42} y2={50 + Math.sin(angle) * 42} className="grid-line" />;
         })}
-        <polygon points={outer} className="data-area" />
-        <polyline points={`${points(count, skills.map((s) => s.value))} ${points(count, [skills[0].value])}`} className="data-line" />
-        {skills.map((skill, i) => {
-          const angle = -Math.PI / 2 + (Math.PI * 2 * i) / count;
-          const r = 42 * skill.value / 100;
-          return <circle key={skill.label} cx={50 + Math.cos(angle) * r} cy={50 + Math.sin(angle) * r} r="1.65" className="data-dot" />;
+        <polygon points={radarPoints(values.map(() => 100))} className="data-area" />
+        <polygon points={radarPoints(values)} className="data-line" />
+        {values.map((value, index) => {
+          const angle = -Math.PI / 2 + (Math.PI * 2 * index) / count;
+          const r = 42 * value / 100;
+          return <circle key={skills[index].id} cx={50 + Math.cos(angle) * r} cy={50 + Math.sin(angle) * r} r="1.65" className="data-dot" />;
         })}
       </svg>
-      {skills.map((skill, i) => {
-        const angle = -Math.PI / 2 + (Math.PI * 2 * i) / count;
-        const x = 50 + Math.cos(angle) * 49;
-        const y = 50 + Math.sin(angle) * 49;
-        return <div key={skill.label} className="axis-label" style={{ left: `${x}%`, top: `${y}%` }}>{skill.short.split("\n").map((line) => <span key={line}>{line}</span>)}</div>;
+      {skills.map((skill, index) => {
+        const angle = -Math.PI / 2 + (Math.PI * 2 * index) / count;
+        return <div key={skill.id} className="axis-label" style={{ left: `${50 + Math.cos(angle) * 49}%`, top: `${50 + Math.sin(angle) * 49}%` }}>{skill.short}</div>;
       })}
     </div>
   );
 }
 
 export default function Home() {
-  const [mode, setMode] = useState<keyof typeof presets>("교사 역량 6각");
-  const [skills, setSkills] = useState(presets[mode]);
-  const average = Math.round(skills.reduce((sum, skill) => sum + skill.value, 0) / skills.length);
-  const top = useMemo(() => [...skills].sort((a, b) => b.value - a.value)[0], [skills]);
+  const [answers, setAnswers] = useState<Record<string, number>>(() => Object.fromEntries(dimensions.flatMap((dimension) => dimension.items.map((_, index) => [`${dimension.id}-${index}`, 3]))));
+  const [openDimension, setOpenDimension] = useState("learning");
 
-  function changeMode(next: keyof typeof presets) {
-    setMode(next);
-    setSkills(presets[next]);
+  const skills = useMemo(() => dimensions.map((dimension) => {
+    const scores = dimension.items.map((_, index) => answers[`${dimension.id}-${index}`] ?? 0);
+    const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    return { ...dimension, value: Math.round(average / 5 * 100), average };
+  }), [answers]);
+
+  const allScores = Object.values(answers);
+  const answered = allScores.filter(Boolean).length;
+  const overall5 = allScores.reduce((sum, score) => sum + score, 0) / allScores.length;
+  const overall100 = Math.round(overall5 / 5 * 100);
+  const top = [...skills].sort((a, b) => b.value - a.value)[0];
+
+  function setAnswer(dimensionId: string, itemIndex: number, score: number) {
+    setAnswers((current) => ({ ...current, [`${dimensionId}-${itemIndex}`]: score }));
   }
 
-  function update(index: number, value: string) {
-    const next = [...skills];
-    next[index] = { ...next[index], value: Math.max(0, Math.min(100, Number(value) || 0)) };
-    setSkills(next);
+  function reset() {
+    setAnswers(Object.fromEntries(dimensions.flatMap((dimension) => dimension.items.map((_, index) => [`${dimension.id}-${index}`, 3]))));
   }
 
   return (
     <main>
       <header className="topbar"><div className="brand-mark">+</div><div className="brand">역량<span>나침반</span></div><div className="brand-sub">교원용 성장 기록 도구</div><div className="top-actions"><button className="ghost-button" onClick={() => window.print()}>인쇄하기 <span>↗</span></button><button className="icon-button" aria-label="도움말">?</button><button className="profile-button">김교사 <span>⌄</span></button></div></header>
-      <section className="hero"><div><div className="eyebrow">MY GROWTH PROFILE <span>●</span></div><h1>나의 교원 역량,<br /><em>한눈에 읽기</em></h1><p>숫자로 기록하고, 다각도로 살펴보세요.<br />작은 변화가 성장의 방향을 만듭니다.</p></div><div className="hero-note"><span className="note-line" />이번 학기 자기 점검<br /><strong>2025 · 2학기</strong></div></section>
+      <section className="hero"><div><div className="eyebrow">MY GROWTH PROFILE <span>●</span></div><h1>문항으로 돌아보고,<br /><em>성장 방향을 읽기</em></h1><p>각 문항을 5점 리커트 척도로 체크하면<br />영역별 평균이 나의 역량 지표가 됩니다.</p></div><div className="hero-note"><span className="note-line" />자기평가 진행률<br /><strong>{answered} / {allScores.length} 문항 응답</strong></div></section>
       <section className="workspace">
-        <aside className="input-panel"><div className="section-kicker">01 <span>INPUT</span></div><h2>역량 점수 입력</h2><p className="muted">각 항목을 0–100점 사이로 입력하세요.</p><div className="segmented"><button className={mode === "교사 역량 6각" ? "active" : ""} onClick={() => changeMode("교사 역량 6각")}>교사 역량 6각</button><button className={mode === "핵심 역량 5각" ? "active" : ""} onClick={() => changeMode("핵심 역량 5각")}>핵심 역량 5각</button></div><div className="input-list">{skills.map((skill, index) => <label className="score-row" key={skill.label}><span className="color-dot" style={{ background: skill.color }} /><span className="score-name">{skill.label}</span><input aria-label={`${skill.label} 점수`} type="number" min="0" max="100" value={skill.value} onChange={(e) => update(index, e.target.value)} /><span className="score-unit">점</span></label>)}</div><button className="reset-button" onClick={() => setSkills(presets[mode])}>↻ 기본값으로 돌아가기</button></aside>
-        <section className="chart-panel"><div className="section-kicker">02 <span>VISUALIZE</span></div><div className="chart-head"><div><h2>나의 역량 지도</h2><p className="muted">현재 입력된 점수를 그래프로 확인합니다.</p></div><div className="average"><span>종합 점수</span><strong>{average}</strong><small>/ 100</small></div></div><Radar skills={skills} /><div className="insight"><div className="insight-icon">✦</div><div><strong>지금 가장 빛나는 역량은 ‘{top.label}’</strong><p>{top.value}점으로 가장 높은 점수를 기록했어요. 이 강점을 동료와 나누어 보세요.</p></div></div></section>
+        <aside className="input-panel questionnaire"><div className="section-kicker">01 <span>CHECKLIST</span></div><h2>역량 문항 체크</h2><p className="muted">각 문항에 가장 가까운 응답을 선택하세요.</p><div className="scale-guide"><span>1</span> 전혀 그렇지 않다 <i /> <span>5</span> 매우 그렇다</div><div className="dimension-list">{dimensions.map((dimension) => <div className={`dimension-card ${openDimension === dimension.id ? "is-open" : ""}`} key={dimension.id}><button className="dimension-toggle" onClick={() => setOpenDimension(openDimension === dimension.id ? "" : dimension.id)}><span className="color-dot" style={{ background: dimension.color }} /><span>{dimension.label}</span><strong>{skills.find((skill) => skill.id === dimension.id)?.average.toFixed(2)}</strong><span className="chevron">⌄</span></button>{openDimension === dimension.id && <div className="question-list">{dimension.items.map((item, index) => { const key = `${dimension.id}-${index}`; return <div className="question" key={key}><p>{index + 1}. {item}</p><div className="likert" role="radiogroup" aria-label={item}>{[1, 2, 3, 4, 5].map((score) => <label key={score} className={answers[key] === score ? "selected" : ""}><input type="radio" name={key} value={score} checked={answers[key] === score} onChange={() => setAnswer(dimension.id, index, score)} /><span>{score}</span><small>{likertLabels[score - 1]}</small></label>)}</div></div>; })}</div>}</div>)}</div><button className="reset-button" onClick={reset}>↻ 응답을 기본값으로 초기화</button></aside>
+        <section className="chart-panel"><div className="section-kicker">02 <span>VISUALIZE</span></div><div className="chart-head"><div><h2>나의 역량 지도</h2><p className="muted">문항별 응답 평균을 100점 기준으로 환산했습니다.</p></div><div className="average"><span>전체 평균</span><strong>{overall100}</strong><small>/ 100</small><em>{overall5.toFixed(2)} / 5.00</em></div></div><Radar skills={skills} /><div className="skill-summary">{skills.map((skill) => <div className="summary-row" key={skill.id}><span className="color-dot" style={{ background: skill.color }} /><span>{skill.label}</span><div className="bar"><i style={{ width: `${skill.value}%`, background: skill.color }} /></div><strong>{skill.value}</strong></div>)}</div><div className="insight"><div className="insight-icon">✦</div><div><strong>가장 높은 역량은 ‘{top.label}’</strong><p>{top.average.toFixed(2)}점으로 나타났습니다. 강점은 계속 살리고, 낮은 영역은 다음 성장 목표로 삼아보세요.</p></div></div></section>
       </section>
-      <footer><span>역량나침반 · 교원의 성장을 기록하고 연결합니다.</span><span>입력한 데이터는 이 기기에만 저장됩니다.</span></footer>
+      <footer><span>역량나침반 · 교원의 성장을 기록하고 연결합니다.</span><span>응답 데이터는 이 기기에만 저장됩니다.</span></footer>
     </main>
   );
 }

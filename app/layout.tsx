@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "역량나침반 | 교원용 성장 기록 도구",
-  description: "교원의 역량 점수를 입력하고 오각형·육각형 그래프로 확인하는 성장 기록 도구입니다.",
+  title: "역량나침반 | 교원 문항 기반 성장 기록",
+  description: "교원 평가 문항을 5점 리커트 척도로 체크하고 영역별 평균을 역량 그래프로 확인하는 도구입니다.",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };
 
