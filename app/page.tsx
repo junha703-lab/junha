@@ -471,7 +471,9 @@ function AdminDashboard({
     <main className="admin-page">
       <header className="topbar admin-topbar">
         <div className="brand-mark">Y</div>
-        <div className="brand">역량지도</div>
+        <div className="brand platform-topbar-title">
+          교원역량지원 통합플랫폼
+        </div>
         <div className="brand-sub">대전양지초 · 관리자 화면</div>
         <div className="top-actions">
           <button
@@ -896,7 +898,7 @@ export default function Home() {
             </div>
             <div className="auth-title-row">
               <div className="brand auth-brand auth-platform-title">
-                교원역량지원 통합플랫폼
+                교원역량개발지원 통합플랫폼
               </div>
             </div>
             <h1>
@@ -1005,7 +1007,9 @@ export default function Home() {
     <main>
       <header className="topbar">
         <div className="brand-mark">Y</div>
-        <div className="brand">역량지도</div>
+        <div className="brand platform-topbar-title">
+          교원역량지원 통합플랫폼
+        </div>
         <div className="brand-sub">대전양지초 · 맞춤형 CARE 교원 성장 기록</div>
         <div className="top-actions">
           <button className="ghost-button" onClick={() => window.print()}>
@@ -1038,8 +1042,11 @@ export default function Home() {
         </div>
         <div className="hero-side">
           <div className="self-assessment-title">
-            <span>SELF COMPETENCY CHECK</span>
-            <strong>자기역량진단</strong>
+            <strong>
+              맞춤형 CARE 지원모델 운영을 통한
+              <br />
+              교원역량개발지원제도 안착
+            </strong>
           </div>
           <div className="care-mini" aria-label="CARE 단계">
             {careSteps.map((step) => (
