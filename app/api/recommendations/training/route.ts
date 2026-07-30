@@ -51,7 +51,7 @@ export async function POST(request: Request) {
           cached[index]?.reason === item.reason,
       );
     const recommendations: TrainingRecommendation[] = cachedMatches
-      ? cached.slice(0, 3)
+      ? cached.slice(0, 5)
       : generated;
 
     if (!cachedMatches) {

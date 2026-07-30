@@ -1190,6 +1190,20 @@ footer {
   line-height: 1.5;
 }
 
+.auth-version-meta {
+  display: grid;
+  gap: 3px;
+  position: absolute;
+  right: 34px;
+  bottom: 25px;
+  color: rgba(75, 91, 113, 0.25);
+  text-align: right;
+  font-size: 8px;
+  line-height: 1.35;
+  letter-spacing: 0.15px;
+  user-select: none;
+}
+
 .platform-roles {
   grid-column: 1 / -1;
   padding: 18px 28px 21px;
@@ -1713,6 +1727,37 @@ footer {
 
 .recommendation-section {
   margin-top: 40px;
+  padding: 30px;
+  position: relative;
+  border: 1px solid #dce6ef;
+  border-radius: 30px;
+}
+
+.training-recommendation-section {
+  border-color: #cfe5e4;
+  background: linear-gradient(145deg, #f8fcfc, #f2f9f8);
+  box-shadow:
+    inset 0 5px 0 #5aa49e,
+    0 14px 34px rgba(41, 105, 108, 0.06);
+}
+
+.book-recommendation-section {
+  margin-top: 30px;
+  border-color: #eadfce;
+  background: linear-gradient(145deg, #fffdf9, #fbf7ef);
+  box-shadow:
+    inset 0 5px 0 #c28b4c,
+    0 14px 34px rgba(127, 91, 43, 0.06);
+}
+
+.training-recommendation-section .recommendation-number {
+  background: #287c79;
+  box-shadow: 0 7px 18px rgba(40, 124, 121, 0.2);
+}
+
+.book-recommendation-section .recommendation-number {
+  background: #a56a2e;
+  box-shadow: 0 7px 18px rgba(165, 106, 46, 0.2);
 }
 
 .recommendation-section-title {
@@ -2565,6 +2610,11 @@ footer {
     letter-spacing: -1.6px;
   }
 
+  .auth-version-meta {
+    margin-top: 34px;
+    position: static;
+  }
+
   .auth-intro h1 {
     margin-top: 28px;
     font-size: 27px;
@@ -2605,6 +2655,12 @@ footer {
 
   .recommendation-section {
     margin-top: 34px;
+    padding: 24px 16px 18px;
+    border-radius: 24px;
+  }
+
+  .book-recommendation-section {
+    margin-top: 24px;
   }
 
   .recommendation-section-title {

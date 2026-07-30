@@ -522,12 +522,12 @@ export async function POST(request: Request) {
     const queryText = queries.join(" | ");
     const cacheVersion = customQuery
       ? "kakao-book-search:v5-freshness-reason"
-      : "kakao-books:v5-freshness-reason";
+      : "kakao-books:v6-five-recommendations";
     const cacheKey = await sha256(
       `${cacheVersion}:${context.weakest_dimension}:${queryText}`,
     );
     const cache = await getCachedBooks(body.sessionToken, cacheKey);
-    const limit = customQuery ? 6 : 3;
+    const limit = customQuery ? 6 : 5;
 
     let recommendations =
       cache.success && cache.hit && Array.isArray(cache.books)

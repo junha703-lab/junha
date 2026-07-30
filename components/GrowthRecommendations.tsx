@@ -360,7 +360,7 @@ export default function GrowthRecommendations({
         }
         setState({
           status: "ready",
-          items: result.recommendations.slice(0, 3),
+          items: result.recommendations.slice(0, 5),
           error: "",
         });
       } catch (error) {
@@ -496,13 +496,14 @@ export default function GrowthRecommendations({
 
       {complete && (
         <>
-          <section className="recommendation-section">
+          <section className="recommendation-section training-recommendation-section">
             <div className="recommendation-section-title">
               <span className="recommendation-number">01</span>
               <div>
                 <h3>가장 먼저 살펴볼 연수 주제</h3>
                 <p>
-                  대표 추천 1개에 집중하고, 추가 추천은 필요할 때 펼쳐보세요.
+                  대표 추천 1개에 집중하고, 추가 추천 4개는 필요할 때
+                  펼쳐보세요.
                 </p>
               </div>
             </div>
@@ -595,7 +596,7 @@ export default function GrowthRecommendations({
             )}
           </section>
 
-          <section className="recommendation-section">
+          <section className="recommendation-section book-recommendation-section">
             <div className="recommendation-section-title">
               <span className="recommendation-number">02</span>
               <div>

@@ -617,7 +617,7 @@ function AdminDashboard({
           })}
         </div>
       </section>
-      <div className="developer-credit">앱개발자: 연구부장</div>
+      <div className="developer-credit">앱개발자: 도준하</div>
     </main>
   );
 }
@@ -964,6 +964,10 @@ export default function Home() {
             처음 사용하는 이름은 입력한 비밀번호로 계정이 만들어집니다.
             이후 같은 이름과 비밀번호로 어느 기기에서나 기록을 불러옵니다.
           </small>
+          <div className="auth-version-meta" aria-label="앱 정보">
+            <span>v.1.8.0</span>
+            <span>앱개발자: 도준하</span>
+          </div>
           </section>
           <section className="platform-roles" aria-label="통합플랫폼 주요 역할">
             <strong>이 플랫폼에서 함께하는 교원 성장 과정</strong>
@@ -983,7 +987,6 @@ export default function Home() {
             </ol>
           </section>
         </div>
-        <div className="developer-credit">앱개발자: 연구부장</div>
       </main>
     );
   }
@@ -1292,7 +1295,7 @@ export default function Home() {
           C 역량 설계 · A 역량 함양 · R 역량 실현 · E 성장 및 환류
         </span>
       </footer>
-      <div className="developer-credit">앱개발자: 연구부장</div>
+      <div className="developer-credit">앱개발자: 도준하</div>
     </main>
   );
 }
