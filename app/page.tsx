@@ -895,8 +895,9 @@ export default function Home() {
               </span>
             </div>
             <div className="auth-title-row">
-              <div className="brand-mark">Y</div>
-              <div className="brand auth-brand">역량지도</div>
+              <div className="brand auth-brand auth-platform-title">
+                교원역량지원 통합플랫폼
+              </div>
             </div>
             <p className="auth-eyebrow">YANGJI CARE GROWTH MAP</p>
             <h1>
@@ -965,6 +966,23 @@ export default function Home() {
             처음 사용하는 이름은 입력한 비밀번호로 계정이 만들어집니다.
             이후 같은 이름과 비밀번호로 어느 기기에서나 기록을 불러옵니다.
           </small>
+          </section>
+          <section className="platform-roles" aria-label="통합플랫폼 주요 역할">
+            <strong>이 플랫폼에서 함께하는 교원 성장 과정</strong>
+            <ol>
+              <li>
+                <b>1</b>
+                <span>교원역량 자가진단</span>
+              </li>
+              <li>
+                <b>2</b>
+                <span>교원역량 성장지도</span>
+              </li>
+              <li>
+                <b>3</b>
+                <span>연수, 도서 추천 및 검색</span>
+              </li>
+            </ol>
           </section>
         </div>
         <div className="developer-credit">앱개발자: 연구부장</div>
@@ -1044,8 +1062,37 @@ export default function Home() {
         </div>
       </section>
 
+      <nav className="growth-journey" aria-label="교원역량 성장 3단계">
+        <a className="journey-step journey-one" href="#self-assessment">
+          <b>1</b>
+          <span>
+            <small>CHECK</small>
+            교원역량 자가진단
+          </span>
+        </a>
+        <i aria-hidden="true">→</i>
+        <a className="journey-step journey-two" href="#growth-map">
+          <b>2</b>
+          <span>
+            <small>MAP</small>
+            역량 성장지도
+          </span>
+        </a>
+        <i aria-hidden="true">→</i>
+        <a className="journey-step journey-three" href="#growth-recommendations">
+          <b>3</b>
+          <span>
+            <small>NEXT</small>
+            맞춤형 성장 추천
+          </span>
+        </a>
+      </nav>
+
       <section className="workspace">
-        <aside className="input-panel questionnaire">
+        <aside
+          className="input-panel questionnaire stage-one"
+          id="self-assessment"
+        >
           <div className="period-tabs" role="tablist">
             <button
               role="tab"
@@ -1094,10 +1141,10 @@ export default function Home() {
             </button>
           </div>
           <div className="section-kicker">
-            01 <span>CARE CHECK · 역량 돌아보기</span>
+            01 <span>교원역량 자가진단</span>
           </div>
           <h2>
-            {periodLabels[activePeriod]} 성장 점검 문항
+            {periodLabels[activePeriod]} 교원역량 자가진단
           </h2>
           <p className="muted">현재의 나와 가장 가까운 응답을 선택하세요.</p>
           <div className="scale-guide">
@@ -1189,13 +1236,13 @@ export default function Home() {
           )}
         </aside>
 
-        <section className="chart-panel">
+        <section className="chart-panel stage-two" id="growth-map">
           <div className="section-kicker">
-            02 <span>GROWTH MAP · 변화 읽기</span>
+            02 <span>역량 성장지도</span>
           </div>
           <div className="chart-head">
             <div>
-              <h2>{periodLabels[activePeriod]} 맞춤형 CARE 역량 지도</h2>
+              <h2>{periodLabels[activePeriod]} 역량 성장지도</h2>
               <p className="muted">
                 문항 평균을 5점 척도의 7각형 그래프로 표시합니다.
               </p>

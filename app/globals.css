@@ -9,6 +9,9 @@
   --navy: #173b86;
   --sky: #34a8c4;
   --mint: #dff3ec;
+  --stage-one: #cf5968;
+  --stage-two: #2d70b7;
+  --stage-three: #2c8a72;
 }
 
 * {
@@ -284,6 +287,111 @@ button {
   align-items: start;
 }
 
+.growth-journey {
+  width: min(1120px, calc(100% - 40px));
+  margin: -20px auto 30px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+  border: 1px solid #d9e3ee;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14px 38px rgba(28, 62, 109, 0.09);
+}
+
+.growth-journey > i {
+  color: #a7b4c4;
+  font-size: 17px;
+  font-style: normal;
+}
+
+.journey-step {
+  min-width: 0;
+  min-height: 74px;
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid transparent;
+  border-radius: 19px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.journey-step:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(29, 61, 104, 0.1);
+}
+
+.journey-step > b {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 16px;
+}
+
+.journey-step > span {
+  display: grid;
+  gap: 3px;
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: -0.45px;
+}
+
+.journey-step small {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.journey-one {
+  border-color: rgba(207, 89, 104, 0.18);
+  background: #fff7f8;
+}
+
+.journey-one > b {
+  background: var(--stage-one);
+}
+
+.journey-one small {
+  color: var(--stage-one);
+}
+
+.journey-two {
+  border-color: rgba(45, 112, 183, 0.18);
+  background: #f4f8fd;
+}
+
+.journey-two > b {
+  background: var(--stage-two);
+}
+
+.journey-two small {
+  color: var(--stage-two);
+}
+
+.journey-three {
+  border-color: rgba(44, 138, 114, 0.18);
+  background: #f3faf7;
+}
+
+.journey-three > b {
+  background: var(--stage-three);
+}
+
+.journey-three small {
+  color: var(--stage-three);
+}
+
 .input-panel,
 .chart-panel {
   padding: 30px;
@@ -302,6 +410,40 @@ button {
   position: absolute;
   inset: 0 0 auto;
   background: linear-gradient(90deg, var(--navy) 0 58%, var(--sky));
+}
+
+.input-panel.stage-one,
+.chart-panel.stage-two,
+.growth-recommendations.stage-three {
+  scroll-margin-top: 96px;
+}
+
+.input-panel.stage-one {
+  border-color: rgba(207, 89, 104, 0.24);
+}
+
+.input-panel.stage-one::before {
+  background: linear-gradient(90deg, #bd4354, #e98d78);
+}
+
+.input-panel.stage-one .section-kicker,
+.input-panel.stage-one .section-kicker span,
+.input-panel.stage-one h2 {
+  color: #a93f4e;
+}
+
+.chart-panel.stage-two {
+  border-color: rgba(45, 112, 183, 0.24);
+}
+
+.chart-panel.stage-two::before {
+  background: linear-gradient(90deg, #255da4, #4ba6c8);
+}
+
+.chart-panel.stage-two .section-kicker,
+.chart-panel.stage-two .section-kicker span,
+.chart-panel.stage-two h2 {
+  color: #245c9a;
 }
 
 .section-kicker span {
@@ -758,7 +900,7 @@ footer {
 
 .auth-shell {
   width: min(1040px, 100%);
-  min-height: 640px;
+  min-height: 700px;
   display: grid;
   grid-template-columns: 1.12fr 0.88fr;
   position: relative;
@@ -850,8 +992,17 @@ footer {
   margin: 0;
 }
 
+.auth-platform-title {
+  max-width: 500px;
+  font-family: ui-rounded, "Arial Rounded MT Bold", "맑은 고딕", sans-serif;
+  font-size: clamp(30px, 3.7vw, 43px);
+  line-height: 1.14;
+  letter-spacing: -2.1px;
+  text-wrap: balance;
+}
+
 .auth-eyebrow {
-  margin: 46px 0 16px;
+  margin: 34px 0 16px;
   color: #9edee5;
   letter-spacing: 2px;
   font-size: 10px;
@@ -1024,6 +1175,72 @@ footer {
   color: #8b96a5;
   font-size: 10px;
   line-height: 1.5;
+}
+
+.platform-roles {
+  grid-column: 1 / -1;
+  padding: 18px 28px 21px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 22px;
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid #dce5ef;
+  background: linear-gradient(90deg, #f8fbff, #fbfdfc);
+}
+
+.platform-roles > strong {
+  color: #315374;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.platform-roles ol {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+}
+
+.platform-roles li {
+  min-width: 0;
+  min-height: 47px;
+  padding: 8px 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #dde7f0;
+  border-radius: 15px;
+  background: #fff;
+  color: #394e68;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.platform-roles li b {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 9px;
+  color: #fff;
+  font-size: 10px;
+}
+
+.platform-roles li:nth-child(1) b {
+  background: var(--stage-one);
+}
+
+.platform-roles li:nth-child(2) b {
+  background: var(--stage-two);
+}
+
+.platform-roles li:nth-child(3) b {
+  background: var(--stage-three);
 }
 
 .admin-page {
@@ -1343,6 +1560,27 @@ footer {
     radial-gradient(circle at 92% 4%, rgba(52, 168, 196, 0.11), transparent 25%),
     linear-gradient(145deg, #ffffff, #f8fbfe);
   box-shadow: 0 20px 52px rgba(27, 66, 122, 0.09);
+}
+
+.growth-recommendations.stage-three {
+  border-color: rgba(44, 138, 114, 0.24);
+}
+
+.growth-recommendations.stage-three::before {
+  content: "";
+  height: 8px;
+  position: absolute;
+  inset: 0 0 auto;
+  background: linear-gradient(90deg, #287a67, #55aa8e);
+}
+
+.growth-recommendations.stage-three .recommendation-heading .section-kicker,
+.growth-recommendations.stage-three
+  .recommendation-heading
+  .section-kicker
+  span,
+.growth-recommendations.stage-three .recommendation-heading h2 {
+  color: #236d5b;
 }
 
 .growth-recommendations::after {
@@ -1859,6 +2097,11 @@ footer {
     padding: 42px 38px 36px;
   }
 
+  .platform-roles {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   .workspace {
     grid-template-columns: 1fr;
   }
@@ -1938,6 +2181,24 @@ footer {
     gap: 28px;
   }
 
+  .growth-journey {
+    width: calc(100% - 28px);
+    margin: -8px auto 24px;
+    padding: 10px;
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .growth-journey > i {
+    justify-self: center;
+    line-height: 1;
+    transform: rotate(90deg);
+  }
+
+  .journey-step {
+    min-height: 64px;
+  }
+
   .hero-side {
     width: 100%;
     min-width: 0;
@@ -2004,6 +2265,19 @@ footer {
 
   .auth-intro h1 {
     font-size: 33px;
+  }
+
+  .auth-platform-title {
+    font-size: 30px;
+    letter-spacing: -1.5px;
+  }
+
+  .platform-roles {
+    padding: 18px 22px 22px;
+  }
+
+  .platform-roles ol {
+    grid-template-columns: 1fr;
   }
 
   .care-step {

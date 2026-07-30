@@ -283,7 +283,11 @@ export default function GrowthRecommendations({
   }
 
   return (
-    <section className="growth-recommendations" aria-labelledby="growth-title">
+    <section
+      className="growth-recommendations stage-three"
+      id="growth-recommendations"
+      aria-labelledby="growth-title"
+    >
       <div className="recommendation-heading">
         <div className="section-kicker">
           03 <span>CARE NEXT · 맞춤형 성장 설계</span>
