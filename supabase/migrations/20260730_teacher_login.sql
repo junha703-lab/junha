@@ -23,6 +23,13 @@ create table if not exists public.teacher_sessions (
 alter table public.assessments
   add column if not exists account_id uuid;
 
+alter table public.assessments
+  drop constraint if exists assessments_period_check;
+
+alter table public.assessments
+  add constraint assessments_period_check
+  check (period in ('april', 'october', 'january'));
+
 do $$
 begin
   if not exists (
@@ -259,7 +266,7 @@ begin
     return jsonb_build_object('success', false, 'error', 'SESSION_EXPIRED');
   end if;
 
-  if p_period not in ('october', 'january')
+  if p_period not in ('april', 'october', 'january')
     or jsonb_typeof(p_answers) <> 'object'
     or p_learning is null or p_learning not between 0 and 5
     or p_guidance is null or p_guidance not between 0 and 5
