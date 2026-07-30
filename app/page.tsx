@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import GrowthRecommendations from "../components/GrowthRecommendations";
+
 type Period = "april" | "october" | "january";
 type Dimension = {
   id: string;
@@ -632,6 +634,7 @@ export default function Home() {
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
+  const [recommendationRefreshKey, setRecommendationRefreshKey] = useState(0);
   const [activePeriod, setActivePeriod] = useState<Period>("april");
   const [openDimension, setOpenDimension] = useState("learning");
   const [answersByPeriod, setAnswersByPeriod] =
@@ -866,6 +869,7 @@ export default function Home() {
         throw new Error(result.error ?? "Unable to save assessment.");
       }
       setSaveState("saved");
+      setRecommendationRefreshKey((current) => current + 1);
     } catch {
       setSaveState("error");
     }
@@ -1223,6 +1227,12 @@ export default function Home() {
           </div>
         </section>
       </section>
+      <GrowthRecommendations
+        sessionToken={sessionToken}
+        period={activePeriod}
+        complete={responded === total}
+        refreshKey={recommendationRefreshKey}
+      />
       <footer>
         <span>대전양지초등학교 · 맞춤형 CARE 지원 모델</span>
         <span>
