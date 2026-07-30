@@ -26,6 +26,7 @@ type BookRecommendation = {
   detailUrl: string;
   isbn: string;
   reason: string;
+  popularityLabel?: string;
   kyoboUrl: string;
   youngpoongUrl: string;
   naverUrl: string;
@@ -98,6 +99,9 @@ function BookCards({ items }: { items: BookRecommendation[] }) {
               {book.authors.join(", ")}
               <span>{book.publisher}</span>
             </p>
+            {book.popularityLabel && (
+              <p className="book-popularity">{book.popularityLabel}</p>
+            )}
             <p className="card-reason">{book.reason}</p>
             <a
               className="book-detail-link"
@@ -373,9 +377,10 @@ export default function GrowthRecommendations({
                 </div>
                 <div className="training-search-panel">
                   <div>
-                    <strong>대전교육연수원 통합검색</strong>
+                    <strong>연수 통합검색</strong>
                     <span>
-                      추천어를 선택하거나 직접 짧은 검색어를 입력해 보세요.
+                      검색어를 입력하면 대전교육연수원 검색 결과로 바로
+                      이동합니다.
                     </span>
                   </div>
                   <form
@@ -387,16 +392,19 @@ export default function GrowthRecommendations({
                     <label className="sr-only" htmlFor="training-search-keyword">
                       연수 검색어
                     </label>
+                    <span className="search-lens" aria-hidden="true">
+                      <i />
+                    </span>
                     <input
                       id="training-search-keyword"
                       name="searchKeyword"
                       value={trainingQuery}
                       onChange={(event) => setTrainingQuery(event.target.value)}
                       maxLength={20}
-                      placeholder="예: 학교폭력"
+                      placeholder="찾고 싶은 연수 주제를 입력하세요"
                       required
                     />
-                    <button type="submit">연수 검색하기 ↗</button>
+                    <button type="submit">연수 찾기 ↗</button>
                   </form>
                 </div>
               </>
@@ -408,7 +416,10 @@ export default function GrowthRecommendations({
               <span className="recommendation-number">02</span>
               <div>
                 <h3>추천 도서 3권</h3>
-                <p>카카오 도서 검색 API에서 확인된 실제 도서만 표시합니다.</p>
+                <p>
+                  검색어 관련도를 먼저 반영하고, 공개 평가 수와 평점을
+                  인기도 신호로 후순위에 반영합니다.
+                </p>
               </div>
             </div>
             {books.status === "loading" && (
@@ -427,8 +438,8 @@ export default function GrowthRecommendations({
                   <div>
                     <strong>도서 직접 검색</strong>
                     <span>
-                      원하는 주제를 검색하면 카카오 도서 API의 실제 책을
-                      최대 6권까지 보여드립니다.
+                      주제를 입력하면 관련도 우선, 이용자 평가 참고 순으로
+                      실제 도서를 찾아드립니다.
                     </span>
                   </div>
                   <div className="book-suggestion-chips">
@@ -450,14 +461,17 @@ export default function GrowthRecommendations({
                   <label className="sr-only" htmlFor="book-search-query">
                     도서 검색어
                   </label>
+                  <span className="search-lens" aria-hidden="true">
+                    <i />
+                  </span>
                   <input
                     id="book-search-query"
                     value={bookQuery}
                     onChange={(event) => setBookQuery(event.target.value)}
                     maxLength={40}
-                    placeholder="예: 초등 학교폭력 예방"
+                    placeholder="찾고 싶은 도서 주제를 입력하세요"
                   />
-                  <button type="submit">도서 검색</button>
+                  <button type="submit">도서 찾기</button>
                 </form>
 
                 {bookSearch?.status === "loading" && (

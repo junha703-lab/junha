@@ -28,6 +28,27 @@ type KakaoBookResponse = {
   documents?: KakaoBook[];
 };
 
+type GoogleVolume = {
+  volumeInfo?: {
+    title?: string;
+    averageRating?: number;
+    ratingsCount?: number;
+    industryIdentifiers?: Array<{
+      type?: string;
+      identifier?: string;
+    }>;
+  };
+};
+
+type GoogleBookResponse = {
+  items?: GoogleVolume[];
+};
+
+type PopularitySignal = {
+  ratingsCount: number;
+  averageRating: number;
+};
+
 type BookCacheResponse = {
   success: boolean;
   error?: string;
@@ -38,7 +59,10 @@ type BookCacheResponse = {
 type RankedBook = {
   book: BookRecommendation;
   identity: string;
-  score: number;
+  relevanceScore: number;
+  ratingsCount: number;
+  averageRating: number;
+  sourcePosition: number;
   queryIndex: number;
 };
 
@@ -65,6 +89,55 @@ async function fetchKakaoBooks(query: string, apiKey: string) {
   }
 }
 
+async function fetchGooglePopularity(query: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+  try {
+    const url = new URL("https://www.googleapis.com/books/v1/volumes");
+    url.searchParams.set("q", query);
+    url.searchParams.set("maxResults", "40");
+    url.searchParams.set("printType", "books");
+    url.searchParams.set("langRestrict", "ko");
+    url.searchParams.set(
+      "fields",
+      "items(volumeInfo(title,averageRating,ratingsCount,industryIdentifiers))",
+    );
+    const response = await fetch(url, {
+      signal: controller.signal,
+      cache: "force-cache",
+    });
+    if (!response.ok) throw new Error(`GOOGLE_BOOKS_API_${response.status}`);
+
+    const result = (await response.json()) as GoogleBookResponse;
+    const popularity = new Map<string, PopularitySignal>();
+    for (const item of result.items ?? []) {
+      const info = item.volumeInfo;
+      const ratingsCount = Math.max(0, Number(info?.ratingsCount ?? 0));
+      if (!info?.title || ratingsCount === 0) continue;
+      const signal = {
+        ratingsCount,
+        averageRating: Math.max(0, Number(info.averageRating ?? 0)),
+      };
+      const keys = [
+        `title:${canonicalBookTitle(info.title)}`,
+        ...(info.industryIdentifiers ?? []).map(
+          (identifier) =>
+            `isbn:${(identifier.identifier ?? "").replace(/\D/g, "")}`,
+        ),
+      ].filter((key) => !key.endsWith(":"));
+      for (const key of keys) {
+        const current = popularity.get(key);
+        if (!current || current.ratingsCount < ratingsCount) {
+          popularity.set(key, signal);
+        }
+      }
+    }
+    return popularity;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function cleanBookTitle(title: string) {
   return title.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 }
@@ -77,11 +150,32 @@ function canonicalBookTitle(title: string) {
     .replace(/[^0-9a-z가-힣]/gi, "");
 }
 
+function findPopularity(
+  popularity: Map<string, PopularitySignal>,
+  title: string,
+  isbn: string,
+) {
+  const keys = [
+    ...isbn
+      .split(/\s+/)
+      .map((value) => value.replace(/\D/g, ""))
+      .filter(Boolean)
+      .map((value) => `isbn:${value}`),
+    `title:${canonicalBookTitle(title)}`,
+  ];
+  for (const key of keys) {
+    const signal = popularity.get(key);
+    if (signal) return signal;
+  }
+  return { ratingsCount: 0, averageRating: 0 };
+}
+
 function normalizeBook(
   book: KakaoBook,
   dimension: CompetencyId,
   query: string,
   isCustomSearch: boolean,
+  popularity: PopularitySignal,
 ): BookRecommendation | null {
   const title = cleanBookTitle(book.title ?? "");
   const authors = Array.isArray(book.authors)
@@ -94,6 +188,10 @@ function normalizeBook(
   const reason = isCustomSearch
     ? `카카오 도서 검색에서 ‘${query}’ 관련 실제 도서로 확인되었습니다. 제목과 저자, 상세 정보를 확인해 활용해 보세요.`
     : `카카오 도서 검색에서 확인된 실제 도서입니다. ${config.bookFocus} 역량을 보완하는 데 활용해 보세요.`;
+  const popularityLabel =
+    popularity.ratingsCount > 0
+      ? `인기도 참고 · Google Books 평가 ${popularity.ratingsCount.toLocaleString("ko-KR")}개${popularity.averageRating > 0 ? ` · ${popularity.averageRating.toFixed(1)}점` : ""}`
+      : "관련도 우선 · 카카오 검색 상위";
   return {
     title,
     authors,
@@ -102,20 +200,23 @@ function normalizeBook(
     detailUrl,
     isbn: book.isbn?.trim() || "",
     reason,
+    popularityLabel,
     ...makeBookSearchLinks(title, authors),
   };
 }
 
-function scoreBook(book: KakaoBook, query: string, position: number) {
+function scoreBook(book: KakaoBook, query: string) {
   const title = cleanBookTitle(book.title ?? "").toLocaleLowerCase("ko-KR");
   const contents = (book.contents ?? "").toLocaleLowerCase("ko-KR");
   const corpus = `${title} ${contents}`;
+  const normalizedQuery = query.toLocaleLowerCase("ko-KR").trim();
   const tokens = query
     .toLocaleLowerCase("ko-KR")
     .split(/\s+/)
     .filter((token) => token.length > 1);
 
-  let score = Math.max(0, 30 - position);
+  let score = 0;
+  if (normalizedQuery.length > 1 && title.includes(normalizedQuery)) score += 45;
   if (title.includes("초등") || title.includes("초등학생")) score += 60;
   else if (contents.includes("초등") || contents.includes("초등학생")) score += 25;
   if (title.includes("교사") || contents.includes("초등 교사")) score += 12;
@@ -127,6 +228,19 @@ function scoreBook(book: KakaoBook, query: string, position: number) {
     score -= 35;
   }
   return score;
+}
+
+function compareRankedBooks(a: RankedBook, b: RankedBook) {
+  if (a.relevanceScore !== b.relevanceScore) {
+    return b.relevanceScore - a.relevanceScore;
+  }
+  if (a.ratingsCount !== b.ratingsCount) {
+    return b.ratingsCount - a.ratingsCount;
+  }
+  if (a.averageRating !== b.averageRating) {
+    return b.averageRating - a.averageRating;
+  }
+  return a.sourcePosition - b.sourcePosition;
 }
 
 function uniqueBooks(books: BookRecommendation[], limit: number) {
@@ -147,26 +261,42 @@ async function searchBooksForQueries(
   limit: number,
   isCustomSearch: boolean,
 ): Promise<BookRecommendation[]> {
-  const results = await Promise.allSettled(
-    queries.map((query) => fetchKakaoBooks(query, apiKey)),
-  );
+  const [results, popularityResults] = await Promise.all([
+    Promise.allSettled(
+      queries.map((query) => fetchKakaoBooks(query, apiKey)),
+    ),
+    Promise.allSettled(queries.map((query) => fetchGooglePopularity(query))),
+  ]);
   const ranked: RankedBook[] = [];
 
   results.forEach((result, queryIndex) => {
     if (result.status !== "fulfilled") return;
     const query = queries[queryIndex];
+    const popularity =
+      popularityResults[queryIndex]?.status === "fulfilled"
+        ? popularityResults[queryIndex].value
+        : new Map<string, PopularitySignal>();
     result.value.forEach((document, position) => {
+      const popularitySignal = findPopularity(
+        popularity,
+        document.title ?? "",
+        document.isbn ?? "",
+      );
       const normalized = normalizeBook(
         document,
         dimension,
         query,
         isCustomSearch,
+        popularitySignal,
       );
       if (!normalized) return;
       ranked.push({
         book: normalized,
         identity: canonicalBookTitle(normalized.title),
-        score: scoreBook(document, query, position),
+        relevanceScore: scoreBook(document, query),
+        ratingsCount: popularitySignal.ratingsCount,
+        averageRating: popularitySignal.averageRating,
+        sourcePosition: position,
         queryIndex,
       });
     });
@@ -177,13 +307,13 @@ async function searchBooksForQueries(
   for (let queryIndex = 0; queryIndex < queries.length; queryIndex += 1) {
     const best = ranked
       .filter((item) => item.queryIndex === queryIndex && !seen.has(item.identity))
-      .sort((a, b) => b.score - a.score)[0];
+      .sort(compareRankedBooks)[0];
     if (!best) continue;
     selected.push(best);
     seen.add(best.identity);
   }
 
-  for (const candidate of ranked.sort((a, b) => b.score - a.score)) {
+  for (const candidate of ranked.sort(compareRankedBooks)) {
     if (selected.length >= limit) break;
     if (!candidate.identity || seen.has(candidate.identity)) continue;
     selected.push(candidate);
@@ -270,8 +400,8 @@ export async function POST(request: Request) {
     const queries = customQuery ? [customQuery] : config.bookQueries;
     const queryText = queries.join(" | ");
     const cacheVersion = customQuery
-      ? "kakao-book-search:v2"
-      : "kakao-books:v2-elementary";
+      ? "kakao-book-search:v3-popularity"
+      : "kakao-books:v3-popularity";
     const cacheKey = await sha256(
       `${cacheVersion}:${context.weakest_dimension}:${queryText}`,
     );

@@ -15,6 +15,7 @@
 - Next.js 16 / React 19
 - Supabase Postgres, RLS, 보안 함수 기반 자체 세션
 - Kakao 책 검색 REST API
+- Google Books 공개 평가 데이터(인기도 보조 신호)
 - GitHub → Vercel 자동 배포
 - OpenAI Sites 배포
 
@@ -86,6 +87,12 @@ supabase/migrations/20260730_growth_recommendations.sql
 표시합니다. 기본 추천은 초등학교 관련성을 우선하며 제목을 정규화해 같은
 책의 표기·판본 차이로 인한 중복을 제거합니다. 화면의 도서 검색창은 동일한
 서버 API를 사용해 실제 도서를 최대 6권까지 보여 줍니다.
+
+추천 순서는 검색어 관련도를 최우선으로 판단하고, Google Books에 공개된
+평가 수와 평균 평점을 인기도 보조 신호로 후순위에 반영합니다. 공개 평가
+데이터가 없는 책은 카카오 정확도 검색에서의 상위 노출 순서를 사용합니다.
+Google Books 공개 도서 조회는 인증이 필요하지 않으며 별도 API 키를
+클라이언트에 노출하지 않습니다.
 
 ## 로컬 실행과 검증
 

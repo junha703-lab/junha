@@ -899,7 +899,6 @@ export default function Home() {
                 교원역량지원 통합플랫폼
               </div>
             </div>
-            <p className="auth-eyebrow">YANGJI CARE GROWTH MAP</p>
             <h1>
               나의 역량을 살피고,
               <br />
@@ -924,7 +923,6 @@ export default function Home() {
             </p>
           </section>
           <section className="auth-card">
-            <div className="form-number">01</div>
             <p className="form-kicker">나의 성장 기록 불러오기</p>
             <h2>이름과 비밀번호를 입력해 주세요.</h2>
           <form onSubmit={enter} className="auth-form">
