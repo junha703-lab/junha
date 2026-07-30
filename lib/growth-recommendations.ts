@@ -36,6 +36,8 @@ export type BookRecommendation = {
   isbn: string;
   reason: string;
   popularityLabel?: string;
+  price?: number;
+  salePrice?: number;
   kyoboUrl: string;
   youngpoongUrl: string;
   naverUrl: string;

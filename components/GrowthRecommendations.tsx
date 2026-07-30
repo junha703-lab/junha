@@ -27,6 +27,8 @@ type BookRecommendation = {
   isbn: string;
   reason: string;
   popularityLabel?: string;
+  price?: number;
+  salePrice?: number;
   kyoboUrl: string;
   youngpoongUrl: string;
   naverUrl: string;
@@ -78,54 +80,175 @@ function errorMessage(error: string | undefined, section: "training" | "books") 
     : "도서 정보를 불러오지 못했습니다. 연수 추천은 계속 이용할 수 있습니다.";
 }
 
+function formatWon(value: number) {
+  return `${value.toLocaleString("ko-KR")}원`;
+}
+
+function RecommendationReason({ reason }: { reason: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="recommendation-reason">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        왜 추천했나요?
+        <span aria-hidden="true">{open ? "−" : "+"}</span>
+      </button>
+      {open && <p className="card-reason">{reason}</p>}
+    </div>
+  );
+}
+
+function BookCard({
+  book,
+  primary = false,
+  onChoose,
+  onOther,
+}: {
+  book: BookRecommendation;
+  primary?: boolean;
+  onChoose?: () => void;
+  onOther?: () => void;
+}) {
+  const price = Math.max(0, Number(book.price ?? 0));
+  const salePrice = Math.max(0, Number(book.salePrice ?? 0));
+  const displayedPrice = salePrice || price;
+
+  return (
+    <article
+      className={`book-card ${primary ? "primary-book-card" : ""}`}
+      key={`${book.title}:${book.isbn || book.detailUrl}`}
+    >
+      <div className="book-cover">
+        <span>표지 없음</span>
+        {book.thumbnail && (
+          <img src={book.thumbnail} alt={`${book.title} 표지`} />
+        )}
+      </div>
+      <div className="book-card-content">
+        <span className="verified-badge">
+          {primary ? "가장 먼저 볼 추천" : "도서 API 확인"}
+        </span>
+        <h4>{book.title}</h4>
+        <p className="book-meta">
+          {book.authors.join(", ")}
+          <span>{book.publisher}</span>
+        </p>
+        {displayedPrice > 0 && (
+          <p className="book-price">
+            <span>카카오 등록가</span>
+            <strong>{formatWon(displayedPrice)}</strong>
+            {salePrice > 0 && price > salePrice && (
+              <del>정가 {formatWon(price)}</del>
+            )}
+          </p>
+        )}
+        {book.popularityLabel && (
+          <p className="book-popularity">{book.popularityLabel}</p>
+        )}
+        <RecommendationReason reason={book.reason} />
+        <a
+          className="book-detail-link"
+          href={book.detailUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          도서 상세보기 ↗
+        </a>
+        <div className="bookstore-links">
+          <a href={book.kyoboUrl} target="_blank" rel="noreferrer">
+            교보문고
+          </a>
+          <a href={book.youngpoongUrl} target="_blank" rel="noreferrer">
+            영풍문고
+          </a>
+          <a href={book.naverUrl} target="_blank" rel="noreferrer">
+            네이버
+          </a>
+        </div>
+        {(onChoose || onOther) && (
+          <div className="recommendation-choice-actions">
+            {onChoose && (
+              <button type="button" onClick={onChoose}>
+                이 도서를 먼저 보기
+              </button>
+            )}
+            {onOther && (
+              <button type="button" onClick={onOther}>
+                관심 없음 · 다른 도서 추천
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
 function BookCards({ items }: { items: BookRecommendation[] }) {
   return (
     <div className="recommendation-grid book-grid">
       {items.map((book) => (
-        <article
-          className="book-card"
+        <BookCard
+          book={book}
           key={`${book.title}:${book.isbn || book.detailUrl}`}
-        >
-          <div className="book-cover">
-            <span>표지 없음</span>
-            {book.thumbnail && (
-              <img src={book.thumbnail} alt={`${book.title} 표지`} />
-            )}
-          </div>
-          <div className="book-card-content">
-            <span className="verified-badge">도서 API 확인</span>
-            <h4>{book.title}</h4>
-            <p className="book-meta">
-              {book.authors.join(", ")}
-              <span>{book.publisher}</span>
-            </p>
-            {book.popularityLabel && (
-              <p className="book-popularity">{book.popularityLabel}</p>
-            )}
-            <p className="card-reason">{book.reason}</p>
-            <a
-              className="book-detail-link"
-              href={book.detailUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              도서 상세보기 ↗
-            </a>
-            <div className="bookstore-links">
-              <a href={book.kyoboUrl} target="_blank" rel="noreferrer">
-                교보문고
-              </a>
-              <a href={book.youngpoongUrl} target="_blank" rel="noreferrer">
-                영풍문고
-              </a>
-              <a href={book.naverUrl} target="_blank" rel="noreferrer">
-                네이버
-              </a>
-            </div>
-          </div>
-        </article>
+        />
       ))}
     </div>
+  );
+}
+
+function TrainingCard({
+  item,
+  primary = false,
+  copied,
+  onCopy,
+  onUseKeyword,
+  onChoose,
+  onOther,
+}: {
+  item: TrainingRecommendation;
+  primary?: boolean;
+  copied: boolean;
+  onCopy: () => void;
+  onUseKeyword: () => void;
+  onChoose?: () => void;
+  onOther?: () => void;
+}) {
+  return (
+    <article className={`training-card ${primary ? "primary-training-card" : ""}`}>
+      <span className="verified-badge">
+        {primary ? "가장 먼저 볼 추천" : "짧은 핵심 검색어"}
+      </span>
+      <h4>{item.keyword}</h4>
+      <p className="card-provider">{item.provider}</p>
+      <RecommendationReason reason={item.reason} />
+      <div className="card-actions">
+        <button type="button" onClick={onUseKeyword}>
+          검색창에 넣기
+        </button>
+        <button type="button" onClick={onCopy}>
+          {copied ? "복사됨 ✓" : "검색어 복사"}
+        </button>
+      </div>
+      {(onChoose || onOther) && (
+        <div className="recommendation-choice-actions">
+          {onChoose && (
+            <button type="button" onClick={onChoose}>
+              이 연수를 먼저 보기
+            </button>
+          )}
+          {onOther && (
+            <button type="button" onClick={onOther}>
+              관심 없음 · 다른 연수 추천
+            </button>
+          )}
+        </div>
+      )}
+    </article>
   );
 }
 
@@ -172,6 +295,8 @@ export default function GrowthRecommendations({
   const [bookSuggestions, setBookSuggestions] = useState<string[]>([]);
   const [bookSearch, setBookSearch] =
     useState<SectionState<BookRecommendation> | null>(null);
+  const [trainingFocusIndex, setTrainingFocusIndex] = useState(0);
+  const [bookFocusIndex, setBookFocusIndex] = useState(0);
 
   useEffect(() => {
     if (!sessionToken || !complete) {
@@ -189,6 +314,8 @@ export default function GrowthRecommendations({
       setBookQuery("");
       setBookSuggestions([]);
       setBookSearch(null);
+      setTrainingFocusIndex(0);
+      setBookFocusIndex(0);
     });
 
     async function loadSection<T>(
@@ -286,6 +413,21 @@ export default function GrowthRecommendations({
     }
   }
 
+  const focusedTrainingIndex =
+    training.items.length > 0
+      ? trainingFocusIndex % training.items.length
+      : 0;
+  const focusedBookIndex =
+    books.items.length > 0 ? bookFocusIndex % books.items.length : 0;
+  const focusedTraining = training.items[focusedTrainingIndex];
+  const focusedBook = books.items[focusedBookIndex];
+  const additionalTraining = training.items
+    .map((item, index) => ({ item, index }))
+    .filter(({ index }) => index !== focusedTrainingIndex);
+  const additionalBooks = books.items
+    .map((book, index) => ({ book, index }))
+    .filter(({ index }) => index !== focusedBookIndex);
+
   return (
     <section
       className="growth-recommendations stage-three"
@@ -332,9 +474,9 @@ export default function GrowthRecommendations({
             <div className="recommendation-section-title">
               <span className="recommendation-number">01</span>
               <div>
-                <h3>추천 연수 탐색어 3개</h3>
+                <h3>가장 먼저 살펴볼 연수 주제</h3>
                 <p>
-                  실제 개설 과정은 대전교육연수원 공식 검색에서 확인합니다.
+                  대표 추천 1개에 집중하고, 추가 추천은 필요할 때 펼쳐보세요.
                 </p>
               </div>
             </div>
@@ -344,36 +486,47 @@ export default function GrowthRecommendations({
             {training.status === "error" && (
               <div className="recommendation-error">{training.error}</div>
             )}
-            {training.status === "ready" && (
+            {training.status === "ready" && focusedTraining && (
               <>
-                <div className="recommendation-grid training-grid">
-                  {training.items.map((item, index) => (
-                    <article className="training-card" key={item.keyword}>
-                      <div className="card-index">
-                        {String(index + 1).padStart(2, "0")}
+                <div className="focused-recommendation">
+                  <TrainingCard
+                    item={focusedTraining}
+                    primary
+                    copied={copiedKeyword === focusedTraining.keyword}
+                    onCopy={() => void copyKeyword(focusedTraining.keyword)}
+                    onUseKeyword={() =>
+                      setTrainingQuery(focusedTraining.keyword)
+                    }
+                    onOther={
+                      training.items.length > 1
+                        ? () =>
+                            setTrainingFocusIndex(
+                              (current) =>
+                                (current + 1) % training.items.length,
+                            )
+                        : undefined
+                    }
+                  />
+                  {additionalTraining.length > 0 && (
+                    <details className="additional-recommendations">
+                      <summary>
+                        추가 추천 {additionalTraining.length}개 보기
+                        <span aria-hidden="true">⌄</span>
+                      </summary>
+                      <div className="additional-recommendation-grid">
+                        {additionalTraining.map(({ item, index }) => (
+                          <TrainingCard
+                            item={item}
+                            key={item.keyword}
+                            copied={copiedKeyword === item.keyword}
+                            onCopy={() => void copyKeyword(item.keyword)}
+                            onUseKeyword={() => setTrainingQuery(item.keyword)}
+                            onChoose={() => setTrainingFocusIndex(index)}
+                          />
+                        ))}
                       </div>
-                      <span className="verified-badge">짧은 핵심 검색어</span>
-                      <h4>{item.keyword}</h4>
-                      <p className="card-provider">{item.provider}</p>
-                      <p className="card-reason">{item.reason}</p>
-                      <div className="card-actions">
-                        <button
-                          type="button"
-                          onClick={() => setTrainingQuery(item.keyword)}
-                        >
-                          검색창에 넣기
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void copyKeyword(item.keyword)}
-                        >
-                          {copiedKeyword === item.keyword
-                            ? "복사됨 ✓"
-                            : "검색어 복사"}
-                        </button>
-                      </div>
-                    </article>
-                  ))}
+                    </details>
+                  )}
                 </div>
                 <div className="training-search-panel">
                   <div>
@@ -415,10 +568,9 @@ export default function GrowthRecommendations({
             <div className="recommendation-section-title">
               <span className="recommendation-number">02</span>
               <div>
-                <h3>추천 도서 3권</h3>
+                <h3>가장 먼저 읽어볼 도서</h3>
                 <p>
-                  검색어 관련도를 먼저 반영하고, 공개 평가 수와 평점을
-                  인기도 신호로 후순위에 반영합니다.
+                  관련도와 공개 인기도 신호를 반영한 대표 추천 1권입니다.
                 </p>
               </div>
             </div>
@@ -428,8 +580,38 @@ export default function GrowthRecommendations({
             {books.status === "error" && (
               <div className="recommendation-error books-error">{books.error}</div>
             )}
-            {books.status === "ready" && (
-              <BookCards items={books.items} />
+            {books.status === "ready" && focusedBook && (
+              <div className="focused-recommendation">
+                <BookCard
+                  book={focusedBook}
+                  primary
+                  onOther={
+                    books.items.length > 1
+                      ? () =>
+                          setBookFocusIndex(
+                            (current) => (current + 1) % books.items.length,
+                          )
+                      : undefined
+                  }
+                />
+                {additionalBooks.length > 0 && (
+                  <details className="additional-recommendations">
+                    <summary>
+                      추가 추천 {additionalBooks.length}권 보기
+                      <span aria-hidden="true">⌄</span>
+                    </summary>
+                    <div className="additional-recommendation-grid book-grid">
+                      {additionalBooks.map(({ book, index }) => (
+                        <BookCard
+                          book={book}
+                          key={`${book.title}:${book.isbn || book.detailUrl}`}
+                          onChoose={() => setBookFocusIndex(index)}
+                        />
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
             )}
 
             {books.status === "ready" && (

@@ -22,6 +22,8 @@ type KakaoBook = {
   url?: string;
   isbn?: string;
   contents?: string;
+  price?: number;
+  sale_price?: number;
 };
 
 type KakaoBookResponse = {
@@ -201,6 +203,8 @@ function normalizeBook(
     isbn: book.isbn?.trim() || "",
     reason,
     popularityLabel,
+    price: Math.max(0, Number(book.price ?? 0)),
+    salePrice: Math.max(0, Number(book.sale_price ?? 0)),
     ...makeBookSearchLinks(title, authors),
   };
 }
@@ -400,8 +404,8 @@ export async function POST(request: Request) {
     const queries = customQuery ? [customQuery] : config.bookQueries;
     const queryText = queries.join(" | ");
     const cacheVersion = customQuery
-      ? "kakao-book-search:v3-popularity"
-      : "kakao-books:v3-popularity";
+      ? "kakao-book-search:v4-price"
+      : "kakao-books:v4-price";
     const cacheKey = await sha256(
       `${cacheVersion}:${context.weakest_dimension}:${queryText}`,
     );

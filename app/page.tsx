@@ -898,7 +898,8 @@ export default function Home() {
             </div>
             <div className="auth-title-row">
               <div className="brand auth-brand auth-platform-title">
-                교원역량개발지원 통합플랫폼
+                <span>교원역량개발지원</span>
+                <span>통합플랫폼</span>
               </div>
             </div>
             <h1>
@@ -920,9 +921,6 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <p className="research-theme">
-              맞춤형 CARE 지원 모델 운영을 통한 교원역량개발지원
-            </p>
           </section>
           <section className="auth-card">
             <p className="form-kicker">나의 성장 기록 불러오기</p>
