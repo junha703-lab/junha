@@ -33,12 +33,29 @@ type LoadResponse = {
   success: boolean;
   error?: "SESSION_EXPIRED";
   teacher_name?: string;
+  is_admin?: boolean;
   records?: Partial<Record<Period, StoredRecord>>;
 };
 type SaveResponse = {
   success: boolean;
   error?: "SESSION_EXPIRED" | "INVALID_INPUT";
   submitted_at?: string;
+};
+type AdminAccount = {
+  account_id: string;
+  teacher_name: string;
+  created_at: string;
+  records?: Partial<Record<Period, StoredRecord>>;
+};
+type AdminListResponse = {
+  success: boolean;
+  error?: "NOT_AUTHORIZED";
+  accounts?: AdminAccount[];
+};
+type AdminDeleteResponse = {
+  success: boolean;
+  error?: "NOT_AUTHORIZED" | "ACCOUNT_NOT_FOUND";
+  deleted_name?: string;
 };
 
 const dimensions: Dimension[] = [
@@ -127,6 +144,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
 const SESSION_KEY = "competency-session-token";
+const periods: Period[] = ["april", "october", "january"];
 const periodLabels: Record<Period, string> = {
   april: "4월",
   october: "10월",
@@ -214,6 +232,30 @@ function makeSkills(answerSet: Record<string, number>): RadarSkill[] {
   });
 }
 
+function comparisonLayersFor(
+  period: Period,
+  answersByPeriod: AnswersByPeriod,
+): ComparisonLayer[] {
+  const layers: ComparisonLayer[] = [];
+  if (period === "october" || period === "january") {
+    layers.push({
+      period: "april",
+      label: "4월 배경",
+      skills: makeSkills(answersByPeriod.april),
+      className: "comparison-april",
+    });
+  }
+  if (period === "january") {
+    layers.push({
+      period: "october",
+      label: "10월 배경",
+      skills: makeSkills(answersByPeriod.october),
+      className: "comparison-october",
+    });
+  }
+  return layers;
+}
+
 function Radar({
   skills,
   comparisons,
@@ -293,6 +335,7 @@ function downloadRadarPng(
   skills: RadarSkill[],
   period: Period,
   comparisons: ComparisonLayer[],
+  teacherName?: string,
 ) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
@@ -385,8 +428,8 @@ function downloadRadarPng(
   context.textAlign = "left";
   context.fillText(
     comparisons.length
-      ? `${periodLabels[period]} 역량 지도 · 성장 비교`
-      : `${periodLabels[period]} 역량 지도`,
+      ? `${teacherName ? `${teacherName} · ` : ""}${periodLabels[period]} 역량지도 · 성장 비교`
+      : `${teacherName ? `${teacherName} · ` : ""}${periodLabels[period]} 역량지도`,
     55,
     65,
   );
@@ -395,17 +438,200 @@ function downloadRadarPng(
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
+    const namePrefix = teacherName ? `${teacherName}-` : "";
     link.download = comparisons.length
-      ? `${periodLabels[period]}-역량지도-성장비교.png`
-      : `${periodLabels[period]}-역량지도.png`;
+      ? `${namePrefix}${periodLabels[period]}-역량지도-성장비교.png`
+      : `${namePrefix}${periodLabels[period]}-역량지도.png`;
     link.click();
     URL.revokeObjectURL(url);
   }, "image/png");
 }
 
+function AdminDashboard({
+  accounts,
+  state,
+  deletingAccountId,
+  onRefresh,
+  onDelete,
+  onLogout,
+}: {
+  accounts: AdminAccount[];
+  state: "loading" | "ready" | "error";
+  deletingAccountId: string;
+  onRefresh: () => void;
+  onDelete: (accountId: string) => Promise<void>;
+  onLogout: () => void;
+}) {
+  return (
+    <main className="admin-page">
+      <header className="topbar admin-topbar">
+        <div className="brand-mark">Y</div>
+        <div className="brand">역량지도</div>
+        <div className="brand-sub">대전양지초 · 관리자 화면</div>
+        <div className="top-actions">
+          <button
+            className="ghost-button"
+            onClick={onRefresh}
+            disabled={state === "loading"}
+          >
+            {state === "loading" ? "불러오는 중…" : "새로고침 ↻"}
+          </button>
+          <button className="profile-button" onClick={onLogout}>
+            양지초 · 로그아웃
+          </button>
+        </div>
+      </header>
+
+      <section className="admin-hero">
+        <div>
+          <p className="eyebrow">YANGJI CARE ADMIN</p>
+          <h1>
+            전체 교원의 <em>성장 흐름</em>을
+            <br />
+            한눈에 살펴보세요
+          </h1>
+          <p>
+            4월·10월·1월 역량지도를 계정별로 확인하고, 필요한 지도를
+            PNG 이미지로 저장할 수 있습니다.
+          </p>
+        </div>
+        <div className="admin-summary">
+          <strong>{accounts.length}</strong>
+          <span>등록 교원 계정</span>
+        </div>
+      </section>
+
+      <section className="admin-content">
+        <div className="admin-guide">
+          <div>
+            <strong>지도 읽는 방법</strong>
+            <span>현재 월은 진하게, 이전 평가는 점선 배경으로 표시됩니다.</span>
+          </div>
+          <div className="admin-legend">
+            {dimensions.map((dimension) => (
+              <span key={dimension.id}>
+                <i style={{ background: dimension.color }} />
+                {dimension.short}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {state === "error" && (
+          <div className="admin-empty error">
+            계정 목록을 불러오지 못했습니다. 잠시 후 새로고침해 주세요.
+          </div>
+        )}
+        {state === "loading" && accounts.length === 0 && (
+          <div className="admin-empty">교원별 역량지도를 불러오고 있습니다…</div>
+        )}
+        {state === "ready" && accounts.length === 0 && (
+          <div className="admin-empty">등록된 교원 계정이 없습니다.</div>
+        )}
+
+        <div className="admin-list">
+          {accounts.map((account, accountIndex) => {
+            const accountAnswers = answersFromRecords(account.records);
+            return (
+              <article className="admin-teacher-card" key={account.account_id}>
+                <div className="admin-teacher-head">
+                  <div className="admin-teacher-name">
+                    <span>{String(accountIndex + 1).padStart(2, "0")}</span>
+                    <div>
+                      <h2>{account.teacher_name}</h2>
+                      <p>4월·10월·1월 성장 기록</p>
+                    </div>
+                  </div>
+                  <button
+                    className="admin-delete-button"
+                    disabled={deletingAccountId === account.account_id}
+                    onClick={() => {
+                      const confirmed = window.confirm(
+                        `${account.teacher_name} 계정과 모든 평가 기록을 삭제할까요?\n삭제한 정보는 복구할 수 없습니다.`,
+                      );
+                      if (confirmed) void onDelete(account.account_id);
+                    }}
+                  >
+                    {deletingAccountId === account.account_id
+                      ? "삭제 중…"
+                      : "계정 삭제"}
+                  </button>
+                </div>
+
+                <div className="admin-period-grid">
+                  {periods.map((period) => {
+                    const periodSkills = makeSkills(accountAnswers[period]);
+                    const comparisons = comparisonLayersFor(
+                      period,
+                      accountAnswers,
+                    );
+                    const record = account.records?.[period];
+                    return (
+                      <section className="admin-period-card" key={period}>
+                        <div className="admin-period-head">
+                          <div>
+                            <h3>{periodLabels[period]} 역량지도</h3>
+                            <span
+                              className={record ? "submitted" : "not-submitted"}
+                            >
+                              {record ? "평가 저장됨" : "미제출"}
+                            </span>
+                          </div>
+                          <button
+                            className="admin-png-button"
+                            onClick={() =>
+                              downloadRadarPng(
+                                periodSkills,
+                                period,
+                                comparisons,
+                                account.teacher_name,
+                              )
+                            }
+                          >
+                            PNG ↓
+                          </button>
+                        </div>
+                        <div className="admin-radar">
+                          <Radar
+                            skills={periodSkills}
+                            comparisons={comparisons}
+                          />
+                        </div>
+                        {comparisons.length > 0 && (
+                          <div className="admin-comparison-caption">
+                            {comparisons.map((comparison) => (
+                              <span key={comparison.period}>
+                                <i
+                                  className={`compare-chip ${comparison.className}`}
+                                />
+                                {comparison.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </section>
+                    );
+                  })}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+      <div className="developer-credit">앱개발자: 연구부장</div>
+    </main>
+  );
+}
+
 export default function Home() {
   const [authReady, setAuthReady] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminAccounts, setAdminAccounts] = useState<AdminAccount[]>([]);
+  const [adminState, setAdminState] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
+  const [deletingAccountId, setDeletingAccountId] = useState("");
   const [teacherName, setTeacherName] = useState("");
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -440,8 +666,12 @@ export default function Home() {
         if (!cancelled) {
           setSessionToken(savedToken);
           setTeacherName(loaded.teacher_name);
+          setIsAdmin(Boolean(loaded.is_admin));
           setAnswersByPeriod(answersFromRecords(loaded.records));
           setAuthenticated(true);
+          if (loaded.is_admin) {
+            await fetchAdminAccounts(savedToken);
+          }
         }
       } catch {
         localStorage.removeItem(SESSION_KEY);
@@ -456,29 +686,32 @@ export default function Home() {
     };
   }, []);
 
+  async function fetchAdminAccounts(token = sessionToken) {
+    if (!token) {
+      setAdminState("error");
+      return;
+    }
+    setAdminState("loading");
+    try {
+      const result = await callSupabaseRpc<AdminListResponse>(
+        "admin_list_accounts",
+        { p_token: token },
+      );
+      if (!result.success) {
+        if (result.error === "NOT_AUTHORIZED") clearSession();
+        throw new Error(result.error ?? "Unable to load admin dashboard.");
+      }
+      setAdminAccounts(result.accounts ?? []);
+      setAdminState("ready");
+    } catch {
+      setAdminState("error");
+    }
+  }
+
   const answers = answersByPeriod[activePeriod];
   const skills = useMemo(() => makeSkills(answers), [answers]);
   const comparisonLayers = useMemo<ComparisonLayer[]>(
-    () => {
-      const layers: ComparisonLayer[] = [];
-      if (activePeriod === "october" || activePeriod === "january") {
-        layers.push({
-          period: "april",
-          label: "4월 배경",
-          skills: makeSkills(answersByPeriod.april),
-          className: "comparison-april",
-        });
-      }
-      if (activePeriod === "january") {
-        layers.push({
-          period: "october",
-          label: "10월 배경",
-          skills: makeSkills(answersByPeriod.october),
-          className: "comparison-october",
-        });
-      }
-      return layers;
-    },
+    () => comparisonLayersFor(activePeriod, answersByPeriod),
     [activePeriod, answersByPeriod.april, answersByPeriod.october],
   );
   const responded = Object.values(answers).filter(Boolean).length;
@@ -525,7 +758,11 @@ export default function Home() {
       localStorage.setItem(SESSION_KEY, login.session_token);
       setSessionToken(login.session_token);
       setTeacherName(loaded.teacher_name ?? name);
+      setIsAdmin(Boolean(loaded.is_admin));
       setAnswersByPeriod(answersFromRecords(loaded.records));
+      if (loaded.is_admin) {
+        await fetchAdminAccounts(login.session_token);
+      }
       setPin("");
       setAuthenticated(true);
     } catch {
@@ -538,6 +775,10 @@ export default function Home() {
   function clearSession() {
     localStorage.removeItem(SESSION_KEY);
     setAuthenticated(false);
+    setIsAdmin(false);
+    setAdminAccounts([]);
+    setAdminState("loading");
+    setDeletingAccountId("");
     setSessionToken("");
     setTeacherName("");
     setPin("");
@@ -554,6 +795,31 @@ export default function Home() {
       } catch {
         // The local session is already cleared.
       }
+    }
+  }
+
+  async function deleteAdminAccount(accountId: string) {
+    if (!sessionToken) return;
+    setDeletingAccountId(accountId);
+    try {
+      const result = await callSupabaseRpc<AdminDeleteResponse>(
+        "admin_delete_account",
+        {
+          p_token: sessionToken,
+          p_account_id: accountId,
+        },
+      );
+      if (!result.success) {
+        if (result.error === "NOT_AUTHORIZED") clearSession();
+        throw new Error(result.error ?? "Unable to delete account.");
+      }
+      setAdminAccounts((current) =>
+        current.filter((account) => account.account_id !== accountId),
+      );
+    } catch {
+      window.alert("계정을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setDeletingAccountId("");
     }
   }
 
@@ -696,6 +962,19 @@ export default function Home() {
         </div>
         <div className="developer-credit">앱개발자: 연구부장</div>
       </main>
+    );
+  }
+
+  if (isAdmin) {
+    return (
+      <AdminDashboard
+        accounts={adminAccounts}
+        state={adminState}
+        deletingAccountId={deletingAccountId}
+        onRefresh={() => void fetchAdminAccounts()}
+        onDelete={deleteAdminAccount}
+        onLogout={() => void logout()}
+      />
     );
   }
 
