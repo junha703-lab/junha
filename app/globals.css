@@ -999,6 +999,313 @@ footer {
   line-height: 1.5;
 }
 
+.admin-page {
+  min-height: 100vh;
+  padding-bottom: 72px;
+  background:
+    radial-gradient(circle at 8% 14%, rgba(94, 173, 226, 0.12), transparent 28%),
+    radial-gradient(circle at 92% 9%, rgba(246, 180, 80, 0.12), transparent 25%),
+    #f5f9fd;
+}
+
+.admin-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+}
+
+.admin-hero {
+  width: min(1280px, calc(100% - 48px));
+  margin: 34px auto 22px;
+  padding: 42px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  border: 1px solid rgba(54, 112, 178, 0.13);
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(238, 247, 255, 0.96)),
+    #fff;
+  box-shadow: 0 18px 50px rgba(30, 69, 120, 0.09);
+}
+
+.admin-hero h1 {
+  margin: 10px 0 14px;
+  color: #17366f;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.18;
+  letter-spacing: -2px;
+}
+
+.admin-hero h1 em {
+  color: #2874ba;
+  font-style: normal;
+}
+
+.admin-hero p {
+  margin: 0;
+  color: #65758d;
+  line-height: 1.75;
+}
+
+.admin-summary {
+  min-width: 176px;
+  padding: 28px 24px;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #2769b2, #204f98);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(38, 87, 174, 0.22);
+}
+
+.admin-summary strong {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.admin-summary span {
+  font-size: 12px;
+  opacity: 0.82;
+}
+
+.admin-content {
+  width: min(1280px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.admin-guide {
+  margin-bottom: 18px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border: 1px solid rgba(95, 127, 164, 0.13);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.admin-guide > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.admin-guide strong {
+  color: #244b83;
+  font-size: 14px;
+}
+
+.admin-guide span {
+  color: #7a899d;
+  font-size: 11px;
+}
+
+.admin-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+
+.admin-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.admin-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.admin-list {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-teacher-card {
+  overflow: hidden;
+  border: 1px solid rgba(69, 108, 155, 0.13);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 32px rgba(34, 72, 121, 0.07);
+}
+
+.admin-teacher-head {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #edf2f7;
+  background: linear-gradient(90deg, #f8fbff, #fffaf2);
+}
+
+.admin-teacher-name {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-teacher-name > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: #e8f2ff;
+  color: #2c67aa;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-teacher-name h2 {
+  margin: 0 0 3px;
+  color: #203e6b;
+  font-size: 20px;
+}
+
+.admin-teacher-name p {
+  margin: 0;
+  color: #8995a6;
+  font-size: 11px;
+}
+
+.admin-delete-button {
+  padding: 9px 14px;
+  border: 1px solid #f0c9c7;
+  border-radius: 999px;
+  background: #fff8f7;
+  color: #b45754;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-delete-button:hover {
+  background: #fff0ee;
+}
+
+.admin-delete-button:disabled,
+.admin-png-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.admin-period-grid {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-period-card {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid #e8eef5;
+  border-radius: 24px;
+  background: #fbfdff;
+}
+
+.admin-period-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-period-head h3 {
+  margin: 0 0 6px;
+  color: #294d7e;
+  font-size: 15px;
+}
+
+.admin-period-head span {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.admin-period-head .submitted {
+  background: #eaf7ef;
+  color: #3d8858;
+}
+
+.admin-period-head .not-submitted {
+  background: #f0f2f5;
+  color: #929ba8;
+}
+
+.admin-png-button {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: #e9f2ff;
+  color: #2863a6;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-png-button:hover {
+  background: #dcecff;
+}
+
+.admin-radar {
+  min-height: 245px;
+  display: grid;
+  place-items: center;
+}
+
+.admin-radar .radar-wrap {
+  width: min(225px, 100%);
+  margin: 4px auto 0;
+}
+
+.admin-radar .axis-label {
+  display: none;
+}
+
+.admin-comparison-caption {
+  min-height: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 12px;
+  color: #8490a0;
+  font-size: 9px;
+}
+
+.admin-comparison-caption span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.admin-empty {
+  padding: 58px 24px;
+  border: 1px dashed #cbd8e7;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #718198;
+  text-align: center;
+}
+
+.admin-empty.error {
+  border-color: #ebc7c5;
+  background: #fffafa;
+  color: #aa5955;
+}
+
 .developer-credit {
   position: fixed;
   right: 14px;
@@ -1016,6 +1323,18 @@ footer {
 }
 
 @media (max-width: 900px) {
+  .admin-period-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-radar {
+    min-height: 285px;
+  }
+
+  .admin-radar .radar-wrap {
+    width: min(270px, 75vw);
+  }
+
   .auth-shell {
     grid-template-columns: 1fr;
   }
@@ -1042,6 +1361,41 @@ footer {
 }
 
 @media (max-width: 760px) {
+  .admin-hero,
+  .admin-content {
+    width: min(100% - 24px, 1280px);
+  }
+
+  .admin-hero {
+    margin-top: 18px;
+    padding: 28px 22px;
+    align-items: stretch;
+    flex-direction: column;
+    border-radius: 26px;
+  }
+
+  .admin-summary {
+    min-width: 0;
+    padding: 18px;
+  }
+
+  .admin-guide {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-legend {
+    justify-content: flex-start;
+  }
+
+  .admin-teacher-head {
+    align-items: flex-start;
+  }
+
+  .admin-period-grid {
+    padding: 12px;
+  }
+
   .topbar {
     padding: 0 20px;
   }
