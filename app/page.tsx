@@ -694,6 +694,7 @@ export default function Home() {
           </small>
           </section>
         </div>
+        <div className="developer-credit">앱개발자: 연구부장</div>
       </main>
     );
   }
@@ -951,6 +952,7 @@ export default function Home() {
         <span>대전양지초등학교 · 맞춤형 CARE 지원 모델</span>
         <span>C 역량 설계 · A 역량 연수 · R 역량 실현 · E 역량 변화</span>
       </footer>
+      <div className="developer-credit">앱개발자: 연구부장</div>
     </main>
   );
 }
