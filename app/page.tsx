@@ -12,6 +12,28 @@ type Dimension = {
 };
 type RadarSkill = Dimension & { value: number };
 type AnswersByPeriod = Record<Period, Record<string, number>>;
+type StoredRecord = {
+  answers?: Record<string, number>;
+  submitted_at?: string;
+};
+type LoginResponse = {
+  success: boolean;
+  error?: "INVALID_INPUT" | "INVALID_CREDENTIALS" | "LOGIN_LOCKED";
+  created?: boolean;
+  teacher_name?: string;
+  session_token?: string;
+};
+type LoadResponse = {
+  success: boolean;
+  error?: "SESSION_EXPIRED";
+  teacher_name?: string;
+  records?: Partial<Record<Period, StoredRecord>>;
+};
+type SaveResponse = {
+  success: boolean;
+  error?: "SESSION_EXPIRED" | "INVALID_INPUT";
+  submitted_at?: string;
+};
 
 const dimensions: Dimension[] = [
   {
@@ -98,6 +120,7 @@ const likertLabels = [
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
+const SESSION_KEY = "competency-session-token";
 
 function blankAnswers() {
   return Object.fromEntries(
@@ -109,6 +132,44 @@ function blankAnswers() {
 
 function blankPeriods(): AnswersByPeriod {
   return { october: blankAnswers(), january: blankAnswers() };
+}
+
+function answersFromRecords(
+  records?: Partial<Record<Period, StoredRecord>>,
+): AnswersByPeriod {
+  const next = blankPeriods();
+  (["october", "january"] as Period[]).forEach((period) => {
+    const saved = records?.[period]?.answers;
+    if (saved && typeof saved === "object") {
+      next[period] = { ...next[period], ...saved };
+    }
+  });
+  return next;
+}
+
+async function callSupabaseRpc<T>(
+  functionName: string,
+  body: Record<string, unknown>,
+): Promise<T> {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error("Supabase environment variables are missing.");
+  }
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/rpc/${functionName}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<T>;
 }
 
 function radarPoints(values: number[], radius = 42) {
@@ -317,6 +378,8 @@ export default function Home() {
   const [teacherName, setTeacherName] = useState("");
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [loginState, setLoginState] = useState<"idle" | "loading">("idle");
+  const [sessionToken, setSessionToken] = useState("");
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -326,32 +389,41 @@ export default function Home() {
     useState<AnswersByPeriod>(blankPeriods);
 
   useEffect(() => {
-    const savedName = sessionStorage.getItem("competency-auth");
-    if (savedName) {
-      setAuthenticated(true);
-      setTeacherName(savedName);
-      const savedAnswers = localStorage.getItem(
-        `competency-period-answers:${savedName}`,
-      );
-      if (savedAnswers) {
-        try {
-          setAnswersByPeriod(JSON.parse(savedAnswers));
-        } catch {
-          setAnswersByPeriod(blankPeriods());
+    let cancelled = false;
+    const savedToken = localStorage.getItem(SESSION_KEY);
+
+    async function restoreSession() {
+      if (!savedToken) {
+        if (!cancelled) setAuthReady(true);
+        return;
+      }
+
+      try {
+        const loaded = await callSupabaseRpc<LoadResponse>("teacher_load", {
+          p_token: savedToken,
+        });
+        if (!loaded.success || !loaded.teacher_name) {
+          localStorage.removeItem(SESSION_KEY);
+          return;
         }
+        if (!cancelled) {
+          setSessionToken(savedToken);
+          setTeacherName(loaded.teacher_name);
+          setAnswersByPeriod(answersFromRecords(loaded.records));
+          setAuthenticated(true);
+        }
+      } catch {
+        localStorage.removeItem(SESSION_KEY);
+      } finally {
+        if (!cancelled) setAuthReady(true);
       }
     }
-    setAuthReady(true);
-  }, []);
 
-  useEffect(() => {
-    if (authReady && authenticated && teacherName.trim()) {
-      localStorage.setItem(
-        `competency-period-answers:${teacherName.trim()}`,
-        JSON.stringify(answersByPeriod),
-      );
-    }
-  }, [answersByPeriod, authReady, authenticated, teacherName]);
+    void restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const answers = answersByPeriod[activePeriod];
   const skills = useMemo(() => makeSkills(answers), [answers]);
@@ -365,7 +437,7 @@ export default function Home() {
   const responded = Object.values(answers).filter(Boolean).length;
   const total = Object.keys(answers).length;
 
-  function enter(event: React.FormEvent) {
+  async function enter(event: React.FormEvent) {
     event.preventDefault();
     const name = teacherName.trim();
     if (!name) {
@@ -376,20 +448,66 @@ export default function Home() {
       setLoginError("비밀번호는 숫자 4자리로 입력해 주세요.");
       return;
     }
-    const savedAnswers = localStorage.getItem(
-      `competency-period-answers:${name}`,
-    );
-    if (savedAnswers) {
+
+    setLoginState("loading");
+    setLoginError("");
+    try {
+      const login = await callSupabaseRpc<LoginResponse>("teacher_login", {
+        p_name: name,
+        p_pin: pin,
+      });
+
+      if (!login.success || !login.session_token) {
+        if (login.error === "LOGIN_LOCKED") {
+          setLoginError(
+            "입력 오류가 여러 번 발생했습니다. 15분 후 다시 시도해 주세요.",
+          );
+        } else if (login.error === "INVALID_CREDENTIALS") {
+          setLoginError("이름 또는 비밀번호가 올바르지 않습니다.");
+        } else {
+          setLoginError("이름과 숫자 4자리 비밀번호를 확인해 주세요.");
+        }
+        return;
+      }
+
+      const loaded = await callSupabaseRpc<LoadResponse>("teacher_load", {
+        p_token: login.session_token,
+      });
+      if (!loaded.success) throw new Error("Unable to load account records.");
+
+      localStorage.setItem(SESSION_KEY, login.session_token);
+      setSessionToken(login.session_token);
+      setTeacherName(loaded.teacher_name ?? name);
+      setAnswersByPeriod(answersFromRecords(loaded.records));
+      setPin("");
+      setAuthenticated(true);
+    } catch {
+      setLoginError("로그인 연결을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setLoginState("idle");
+    }
+  }
+
+  function clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+    setAuthenticated(false);
+    setSessionToken("");
+    setTeacherName("");
+    setPin("");
+    setAnswersByPeriod(blankPeriods());
+    setSaveState("idle");
+  }
+
+  async function logout() {
+    const token = sessionToken;
+    clearSession();
+    if (token) {
       try {
-        setAnswersByPeriod(JSON.parse(savedAnswers));
+        await callSupabaseRpc<void>("teacher_logout", { p_token: token });
       } catch {
-        setAnswersByPeriod(blankPeriods());
+        // The local session is already cleared.
       }
     }
-    sessionStorage.setItem("competency-auth", name);
-    setTeacherName(name);
-    setAuthenticated(true);
-    setLoginError("");
   }
 
   function setAnswer(
@@ -416,7 +534,7 @@ export default function Home() {
   }
 
   async function saveToSupabase() {
-    if (!teacherName.trim() || !SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    if (!sessionToken) {
       setSaveState("error");
       return;
     }
@@ -424,31 +542,24 @@ export default function Home() {
     const averages = Object.fromEntries(
       skills.map((skill) => [skill.id, Number(skill.value.toFixed(2))]),
     );
-    const payload = {
-      teacher_name: teacherName.trim(),
-      period: activePeriod,
-      learning: averages.learning,
-      guidance: averages.guidance,
-      professional: averages.professional,
-      smart: averages.smart,
-      culture: averages.culture,
-      empathy: averages.empathy,
-      whole: averages.whole,
-      answers,
-    };
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/assessments`, {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify(payload),
+      const result = await callSupabaseRpc<SaveResponse>("teacher_save", {
+        p_token: sessionToken,
+        p_period: activePeriod,
+        p_answers: answers,
+        p_learning: averages.learning,
+        p_guidance: averages.guidance,
+        p_professional: averages.professional,
+        p_smart: averages.smart,
+        p_culture: averages.culture,
+        p_empathy: averages.empathy,
+        p_whole: averages.whole,
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!result.success) {
+        if (result.error === "SESSION_EXPIRED") clearSession();
+        throw new Error(result.error ?? "Unable to save assessment.");
+      }
       setSaveState("saved");
     } catch {
       setSaveState("error");
@@ -498,13 +609,18 @@ export default function Home() {
               />
             </label>
             {loginError && <p className="login-error">{loginError}</p>}
-            <button type="submit" className="enter-button">
-              평가 시작하기 <span>→</span>
+            <button
+              type="submit"
+              className="enter-button"
+              disabled={loginState === "loading"}
+            >
+              {loginState === "loading" ? "기록 불러오는 중..." : "평가 시작하기"}{" "}
+              <span>→</span>
             </button>
           </form>
           <small>
-            이름은 평가 기록의 식별 정보로 사용되며 비밀번호는 저장되지
-            않습니다.
+            처음 사용하는 이름은 입력한 비밀번호로 계정이 만들어집니다.
+            이후 같은 이름과 비밀번호로 어느 기기에서나 기록을 불러옵니다.
           </small>
         </div>
       </main>
@@ -521,7 +637,13 @@ export default function Home() {
           <button className="ghost-button" onClick={() => window.print()}>
             인쇄하기 <span>↗</span>
           </button>
-          <button className="profile-button">{teacherName}</button>
+          <button
+            className="profile-button"
+            onClick={logout}
+            title="로그아웃"
+          >
+            {teacherName} · 로그아웃
+          </button>
         </div>
       </header>
       <section className="hero">
@@ -670,7 +792,7 @@ export default function Home() {
           </button>
           {saveState === "saved" && (
             <p className="save-message success">
-              Supabase에 평가 기록이 저장되었습니다.
+              평가 기록이 저장되어 다른 기기에서도 불러올 수 있습니다.
             </p>
           )}
           {saveState === "error" && (
