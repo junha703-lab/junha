@@ -152,9 +152,9 @@ const periodLabels: Record<Period, string> = {
 };
 const careSteps = [
   { letter: "C", label: "역량 설계", className: "care-c" },
-  { letter: "A", label: "역량 연수", className: "care-a" },
+  { letter: "A", label: "역량 함양", className: "care-a" },
   { letter: "R", label: "역량 실현", className: "care-r" },
-  { letter: "E", label: "역량 변화", className: "care-e" },
+  { letter: "E", label: "성장 및 환류", className: "care-e" },
 ];
 
 function blankAnswers() {
@@ -878,7 +878,15 @@ export default function Home() {
       <main className="auth-page">
         <div className="auth-shell">
           <section className="auth-intro">
-            <p className="school-label">대전양지초등학교 · 교원 성장 지원</p>
+            <div className="school-label">
+              <img
+                src="/yangji-school-emblem.png"
+                alt="대전양지초등학교 교표"
+              />
+              <span>
+                대전양지초등학교 · 교원역량개발지원제도 연구학교
+              </span>
+            </div>
             <div className="auth-title-row">
               <div className="brand-mark">Y</div>
               <div className="brand auth-brand">역량지도</div>
@@ -1217,10 +1225,11 @@ export default function Home() {
       </section>
       <footer>
         <span>대전양지초등학교 · 맞춤형 CARE 지원 모델</span>
-        <span>C 역량 설계 · A 역량 연수 · R 역량 실현 · E 역량 변화</span>
+        <span>
+          C 역량 설계 · A 역량 함양 · R 역량 실현 · E 성장 및 환류
+        </span>
       </footer>
       <div className="developer-credit">앱개발자: 연구부장</div>
     </main>
   );
 }
-

@@ -775,12 +775,14 @@ footer {
   position: relative;
   overflow: hidden;
   color: #fff;
-  background: linear-gradient(
-    145deg,
-    rgba(18, 51, 120, 0.98),
-    rgba(34, 99, 167, 0.96) 62%,
-    rgba(40, 151, 179, 0.94)
-  );
+  background:
+    linear-gradient(
+      145deg,
+      rgba(13, 39, 97, 0.96),
+      rgba(24, 79, 148, 0.9) 58%,
+      rgba(27, 128, 160, 0.84)
+    ),
+    url("/yangji-school-background.png") center 72% / cover no-repeat;
 }
 
 .auth-intro::before,
@@ -810,10 +812,22 @@ footer {
 
 .school-label {
   margin: 0 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
   color: rgba(255, 255, 255, 0.76);
   font-size: 11px;
   letter-spacing: 1.4px;
   font-weight: 700;
+}
+
+.school-label img {
+  width: auto;
+  height: 1.2em;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 
 .auth-title-row {
@@ -1516,4 +1530,3 @@ footer {
     position: static;
   }
 }
-
