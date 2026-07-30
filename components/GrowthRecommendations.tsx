@@ -35,6 +35,7 @@ type RecommendationResponse<T> = Partial<RecommendationSummary> & {
   success: boolean;
   error?: string;
   recommendations?: T[];
+  searchSuggestions?: string[];
 };
 
 type SectionState<T> =
@@ -47,6 +48,9 @@ const periodLabels: Record<Period, string> = {
   october: "10월",
   january: "1월",
 };
+
+const TETI_SEARCH_URL =
+  "https://www.teti.kr/homepage/search/selectTotalSearchList.do";
 
 function loadingState<T>(): SectionState<T> {
   return { status: "loading", items: [], error: "" };
@@ -65,9 +69,60 @@ function errorMessage(error: string | undefined, section: "training" | "books") 
   if (error === "SESSION_EXPIRED") {
     return "로그인 시간이 만료되었습니다. 다시 로그인해 주세요.";
   }
+  if (error === "INVALID_BOOK_QUERY") {
+    return "검색어를 2자 이상 40자 이하로 입력해 주세요.";
+  }
   return section === "training"
     ? "연수 검색어를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."
     : "도서 정보를 불러오지 못했습니다. 연수 추천은 계속 이용할 수 있습니다.";
+}
+
+function BookCards({ items }: { items: BookRecommendation[] }) {
+  return (
+    <div className="recommendation-grid book-grid">
+      {items.map((book) => (
+        <article
+          className="book-card"
+          key={`${book.title}:${book.isbn || book.detailUrl}`}
+        >
+          <div className="book-cover">
+            <span>표지 없음</span>
+            {book.thumbnail && (
+              <img src={book.thumbnail} alt={`${book.title} 표지`} />
+            )}
+          </div>
+          <div className="book-card-content">
+            <span className="verified-badge">도서 API 확인</span>
+            <h4>{book.title}</h4>
+            <p className="book-meta">
+              {book.authors.join(", ")}
+              <span>{book.publisher}</span>
+            </p>
+            <p className="card-reason">{book.reason}</p>
+            <a
+              className="book-detail-link"
+              href={book.detailUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              도서 상세보기 ↗
+            </a>
+            <div className="bookstore-links">
+              <a href={book.kyoboUrl} target="_blank" rel="noreferrer">
+                교보문고
+              </a>
+              <a href={book.youngpoongUrl} target="_blank" rel="noreferrer">
+                영풍문고
+              </a>
+              <a href={book.naverUrl} target="_blank" rel="noreferrer">
+                네이버
+              </a>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
 }
 
 function summaryFrom<T>(
@@ -108,20 +163,29 @@ export default function GrowthRecommendations({
   const [books, setBooks] =
     useState<SectionState<BookRecommendation>>(loadingState<BookRecommendation>);
   const [copiedKeyword, setCopiedKeyword] = useState("");
+  const [trainingQuery, setTrainingQuery] = useState("");
+  const [bookQuery, setBookQuery] = useState("");
+  const [bookSuggestions, setBookSuggestions] = useState<string[]>([]);
+  const [bookSearch, setBookSearch] =
+    useState<SectionState<BookRecommendation> | null>(null);
 
   useEffect(() => {
     if (!sessionToken || !complete) {
-      setSummary(null);
-      setTraining(loadingState<TrainingRecommendation>());
-      setBooks(loadingState<BookRecommendation>());
       return;
     }
 
     const controller = new AbortController();
-    setSummary(null);
-    setTraining(loadingState<TrainingRecommendation>());
-    setBooks(loadingState<BookRecommendation>());
-    setCopiedKeyword("");
+    queueMicrotask(() => {
+      if (controller.signal.aborted) return;
+      setSummary(null);
+      setTraining(loadingState<TrainingRecommendation>());
+      setBooks(loadingState<BookRecommendation>());
+      setCopiedKeyword("");
+      setTrainingQuery("");
+      setBookQuery("");
+      setBookSuggestions([]);
+      setBookSearch(null);
+    });
 
     async function loadSection<T>(
       section: "training" | "books",
@@ -140,6 +204,13 @@ export default function GrowthRecommendations({
         }
         const nextSummary = summaryFrom(result);
         if (nextSummary) setSummary(nextSummary);
+        if (section === "training") {
+          const first = result.recommendations[0] as TrainingRecommendation;
+          setTrainingQuery(first?.keyword ?? "");
+        }
+        if (section === "books" && Array.isArray(result.searchSuggestions)) {
+          setBookSuggestions(result.searchSuggestions.slice(0, 3));
+        }
         setState({
           status: "ready",
           items: result.recommendations.slice(0, 3),
@@ -165,6 +236,49 @@ export default function GrowthRecommendations({
       window.setTimeout(() => setCopiedKeyword(""), 1800);
     } catch {
       setCopiedKeyword("");
+    }
+  }
+
+  async function searchBooks(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = bookQuery.trim().replace(/\s+/g, " ");
+    if (query.length < 2 || query.length > 40) {
+      setBookSearch({
+        status: "error",
+        items: [],
+        error: errorMessage("INVALID_BOOK_QUERY", "books"),
+      });
+      return;
+    }
+
+    setBookSearch(loadingState<BookRecommendation>());
+    try {
+      const response = await fetch("/api/recommendations/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionToken, period, query }),
+      });
+      const result =
+        (await response.json()) as RecommendationResponse<BookRecommendation>;
+      if (
+        !response.ok ||
+        !result.success ||
+        !Array.isArray(result.recommendations)
+      ) {
+        throw new Error(result.error ?? "UNKNOWN_ERROR");
+      }
+      setBookSearch({
+        status: "ready",
+        items: result.recommendations.slice(0, 6),
+        error: "",
+      });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : undefined;
+      setBookSearch({
+        status: "error",
+        items: [],
+        error: errorMessage(code, "books"),
+      });
     }
   }
 
@@ -223,25 +337,65 @@ export default function GrowthRecommendations({
               <div className="recommendation-error">{training.error}</div>
             )}
             {training.status === "ready" && (
-              <div className="recommendation-grid training-grid">
-                {training.items.map((item, index) => (
-                  <article className="training-card" key={item.keyword}>
-                    <div className="card-index">{String(index + 1).padStart(2, "0")}</div>
-                    <span className="verified-badge">공식 사이트 검색어</span>
-                    <h4>{item.keyword}</h4>
-                    <p className="card-provider">{item.provider}</p>
-                    <p className="card-reason">{item.reason}</p>
-                    <div className="card-actions">
-                      <a href={item.searchUrl} target="_blank" rel="noreferrer">
-                        연수 검색하기 ↗
-                      </a>
-                      <button type="button" onClick={() => void copyKeyword(item.keyword)}>
-                        {copiedKeyword === item.keyword ? "복사됨 ✓" : "검색어 복사"}
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
+              <>
+                <div className="recommendation-grid training-grid">
+                  {training.items.map((item, index) => (
+                    <article className="training-card" key={item.keyword}>
+                      <div className="card-index">
+                        {String(index + 1).padStart(2, "0")}
+                      </div>
+                      <span className="verified-badge">짧은 핵심 검색어</span>
+                      <h4>{item.keyword}</h4>
+                      <p className="card-provider">{item.provider}</p>
+                      <p className="card-reason">{item.reason}</p>
+                      <div className="card-actions">
+                        <button
+                          type="button"
+                          onClick={() => setTrainingQuery(item.keyword)}
+                        >
+                          검색창에 넣기
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void copyKeyword(item.keyword)}
+                        >
+                          {copiedKeyword === item.keyword
+                            ? "복사됨 ✓"
+                            : "검색어 복사"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                <div className="training-search-panel">
+                  <div>
+                    <strong>대전교육연수원 통합검색</strong>
+                    <span>
+                      추천어를 선택하거나 직접 짧은 검색어를 입력해 보세요.
+                    </span>
+                  </div>
+                  <form
+                    className="recommendation-search-form"
+                    action={TETI_SEARCH_URL}
+                    method="get"
+                    target="_blank"
+                  >
+                    <label className="sr-only" htmlFor="training-search-keyword">
+                      연수 검색어
+                    </label>
+                    <input
+                      id="training-search-keyword"
+                      name="searchKeyword"
+                      value={trainingQuery}
+                      onChange={(event) => setTrainingQuery(event.target.value)}
+                      maxLength={20}
+                      placeholder="예: 학교폭력"
+                      required
+                    />
+                    <button type="submit">연수 검색하기 ↗</button>
+                  </form>
+                </div>
+              </>
             )}
           </section>
 
@@ -260,49 +414,67 @@ export default function GrowthRecommendations({
               <div className="recommendation-error books-error">{books.error}</div>
             )}
             {books.status === "ready" && (
-              <div className="recommendation-grid book-grid">
-                {books.items.map((book) => (
-                  <article className="book-card" key={book.isbn || book.detailUrl}>
-                    <div className="book-cover">
-                      <span>표지 없음</span>
-                      {book.thumbnail && (
-                        <img src={book.thumbnail} alt={`${book.title} 표지`} />
-                      )}
-                    </div>
-                    <div className="book-card-content">
-                      <span className="verified-badge">도서 API 확인</span>
-                      <h4>{book.title}</h4>
-                      <p className="book-meta">
-                        {book.authors.join(", ")}
-                        <span>{book.publisher}</span>
-                      </p>
-                      <p className="card-reason">{book.reason}</p>
-                      <a
-                        className="book-detail-link"
-                        href={book.detailUrl}
-                        target="_blank"
-                        rel="noreferrer"
+              <BookCards items={books.items} />
+            )}
+
+            {books.status === "ready" && (
+              <div className="book-search-panel">
+                <div className="book-search-heading">
+                  <div>
+                    <strong>도서 직접 검색</strong>
+                    <span>
+                      원하는 주제를 검색하면 카카오 도서 API의 실제 책을
+                      최대 6권까지 보여드립니다.
+                    </span>
+                  </div>
+                  <div className="book-suggestion-chips">
+                    {bookSuggestions.map((suggestion) => (
+                      <button
+                        type="button"
+                        key={suggestion}
+                        onClick={() => setBookQuery(suggestion)}
                       >
-                        도서 상세보기 ↗
-                      </a>
-                      <div className="bookstore-links">
-                        <a href={book.kyoboUrl} target="_blank" rel="noreferrer">
-                          교보문고
-                        </a>
-                        <a
-                          href={book.youngpoongUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          영풍문고
-                        </a>
-                        <a href={book.naverUrl} target="_blank" rel="noreferrer">
-                          네이버
-                        </a>
-                      </div>
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <form
+                  className="recommendation-search-form"
+                  onSubmit={(event) => void searchBooks(event)}
+                >
+                  <label className="sr-only" htmlFor="book-search-query">
+                    도서 검색어
+                  </label>
+                  <input
+                    id="book-search-query"
+                    value={bookQuery}
+                    onChange={(event) => setBookQuery(event.target.value)}
+                    maxLength={40}
+                    placeholder="예: 초등 학교폭력 예방"
+                  />
+                  <button type="submit">도서 검색</button>
+                </form>
+
+                {bookSearch?.status === "loading" && (
+                  <div className="recommendation-loading compact">
+                    실제 도서를 검색하고 있습니다.
+                  </div>
+                )}
+                {bookSearch?.status === "error" && (
+                  <div className="recommendation-error compact">
+                    {bookSearch.error}
+                  </div>
+                )}
+                {bookSearch?.status === "ready" && (
+                  <div className="custom-book-results">
+                    <div className="custom-book-results-title">
+                      <strong>“{bookQuery.trim()}” 검색 결과</strong>
+                      <span>{bookSearch.items.length}권</span>
                     </div>
-                  </article>
-                ))}
+                    <BookCards items={bookSearch.items} />
+                  </div>
+                )}
               </div>
             )}
           </section>

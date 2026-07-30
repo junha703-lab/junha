@@ -60,11 +60,11 @@ export const competencyRecommendations: Record<
     diagnosis:
       "교재 연구, 학생 맞춤형 수업 설계, 질문과 참여 촉진, 이해도 점검 및 평가 환류를 중심으로 다음 성장을 설계해 보세요.",
     trainingKeywords: [
-      "학생 맞춤형 수업 설계",
-      "질문과 학습 참여 촉진",
-      "과정중심평가와 수업 개선",
+      "수업설계",
+      "질문",
+      "평가",
     ],
-    bookQueries: ["학생 맞춤형 수업 설계", "교사 질문 수업", "과정중심평가"],
+    bookQueries: ["초등 수업설계", "초등 질문 수업", "초등 과정중심평가"],
     bookFocus: "수업 설계·질문·평가 환류",
   },
   guidance: {
@@ -72,11 +72,11 @@ export const competencyRecommendations: Record<
     diagnosis:
       "학생 개별 특성 이해, 또래 관계와 학급 공동체, 안전·학교폭력 예방, 기본생활습관 지도를 중심으로 보완해 보세요.",
     trainingKeywords: [
-      "학생 이해와 관계 중심 생활지도",
-      "학교폭력 및 안전사고 예방",
-      "기본생활습관과 학급 공동체",
+      "생활지도",
+      "학교폭력",
+      "안전",
     ],
-    bookQueries: ["관계 중심 생활지도", "학교폭력 예방 교육", "학급 공동체"],
+    bookQueries: ["초등 생활지도", "초등 학교폭력 예방", "초등 학급공동체"],
     bookFocus: "학생 이해·관계·안전 생활지도",
   },
   professional: {
@@ -84,11 +84,11 @@ export const competencyRecommendations: Record<
     diagnosis:
       "교사학습공동체 참여, 새롭게 배운 지식의 수업 적용, 교육환경 변화에 따른 교육자료 재구성을 중심으로 성장해 보세요.",
     trainingKeywords: [
-      "교사학습공동체와 수업 나눔",
-      "교원 전문성 개발",
-      "교육과정 재구성과 교육환경 변화",
+      "학습공동체",
+      "전문성",
+      "교육과정",
     ],
-    bookQueries: ["교사학습공동체", "교사 전문성 개발", "교육과정 재구성"],
+    bookQueries: ["초등 교사학습공동체", "초등 교사 전문성", "초등 교육과정 재구성"],
     bookFocus: "교사학습공동체·전문성·교육과정 재구성",
   },
   smart: {
@@ -96,11 +96,11 @@ export const competencyRecommendations: Record<
     diagnosis:
       "학생 특성과 요구에 맞는 에듀테크·AI 매체 선택과 수업 적용을 중심으로 디지털 수업 역량을 확장해 보세요.",
     trainingKeywords: [
-      "에듀테크 활용 맞춤형 수업",
-      "교사를 위한 생성형 AI 교육",
-      "AI 디지털 수업 설계",
+      "에듀테크",
+      "인공지능",
+      "디지털",
     ],
-    bookQueries: ["교사 에듀테크 수업", "교사 생성형 AI", "AI 디지털 수업 설계"],
+    bookQueries: ["초등 에듀테크", "초등 인공지능 교육", "초등 디지털 수업"],
     bookFocus: "에듀테크·AI 기반 맞춤형 수업",
   },
   culture: {
@@ -108,11 +108,11 @@ export const competencyRecommendations: Record<
     diagnosis:
       "학생의 적성과 특기를 살리는 예술·문화·진로 활동과 창의적 표현 기회 설계를 중심으로 보완해 보세요.",
     trainingKeywords: [
-      "예술 문화 교육 수업",
-      "학생 진로교육과 적성 탐색",
-      "창의적 표현활동 지도",
+      "예술교육",
+      "진로",
+      "문화",
     ],
-    bookQueries: ["예술 문화 교육", "학생 진로교육", "창의적 표현 수업"],
+    bookQueries: ["초등 예술교육", "초등 진로교육", "초등 문화예술"],
     bookFocus: "예술·문화·진로와 창의적 표현",
   },
   empathy: {
@@ -120,11 +120,11 @@ export const competencyRecommendations: Record<
     diagnosis:
       "독서·토의·토론·협동학습으로 상호작용을 촉진하고, 공감적 상담으로 학생의 문제를 지원하는 역량을 키워 보세요.",
     trainingKeywords: [
-      "공감적 학생 상담",
-      "토의 토론 협동학습",
-      "독서교육과 의사소통",
+      "상담",
+      "토론",
+      "독서",
     ],
-    bookQueries: ["교사 공감 대화 상담", "토의 토론 협동학습", "독서교육 소통"],
+    bookQueries: ["초등 공감 상담", "초등 토론 수업", "초등 독서교육"],
     bookFocus: "공감적 상담·토론·협동과 소통",
   },
   whole: {
@@ -132,11 +132,11 @@ export const competencyRecommendations: Record<
     diagnosis:
       "체육·놀이 활동과 인성교육을 바탕으로 건강한 가치관과 도덕성을 갖춘 전인적 성장을 지원해 보세요.",
     trainingKeywords: [
-      "체육 놀이 중심 교육",
-      "인성교육과 도덕성",
-      "전인적 성장과 건강한 가치관",
+      "체육",
+      "놀이",
+      "인성",
     ],
-    bookQueries: ["체육 놀이 교육", "학교 인성교육", "학생 전인적 성장"],
+    bookQueries: ["초등 체육교육", "초등 놀이교육", "초등 인성교육"],
     bookFocus: "체육·놀이·인성과 전인적 성장",
   },
 };
@@ -235,8 +235,8 @@ export function makeTrainingRecommendations(
   return config.trainingKeywords.map((keyword) => ({
     keyword,
     provider: "대전교육연수원",
-    reason: `${config.label} 문항의 핵심인 ‘${keyword}’ 관련 실제 운영 과정을 공식 연수원에서 확인할 수 있는 검색어입니다.`,
-    searchUrl: TETI_SEARCH_URL,
+    reason: `${config.label} 문항과 직접 연결되고 연수원 검색에서 활용하기 쉬운 짧은 핵심어입니다.`,
+    searchUrl: `${TETI_SEARCH_URL}?searchKeyword=${encodeURIComponent(keyword)}`,
   }));
 }
 

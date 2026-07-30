@@ -39,13 +39,21 @@ export async function POST(request: Request) {
       });
     }
 
+    const generated = makeTrainingRecommendations(context.weakest_dimension);
     const cached = context.cached_training;
-    const recommendations: TrainingRecommendation[] =
-      Array.isArray(cached) && cached.length > 0
-        ? cached.slice(0, 3)
-        : makeTrainingRecommendations(context.weakest_dimension);
+    const cachedMatches =
+      Array.isArray(cached) &&
+      cached.length >= generated.length &&
+      generated.every(
+        (item, index) =>
+          cached[index]?.keyword === item.keyword &&
+          cached[index]?.searchUrl === item.searchUrl,
+      );
+    const recommendations: TrainingRecommendation[] = cachedMatches
+      ? cached.slice(0, 3)
+      : generated;
 
-    if (!cached?.length) {
+    if (!cachedMatches) {
       const saved = await saveRecommendations(
         body.sessionToken,
         context,
@@ -58,7 +66,7 @@ export async function POST(request: Request) {
     const config = competencyRecommendations[context.weakest_dimension];
     return NextResponse.json({
       success: true,
-      source: cached?.length ? "history" : "generated-keywords",
+      source: cachedMatches ? "history" : "short-keywords",
       weakestDimension: context.weakest_dimension,
       weakestLabel: config.label,
       weakestScore: context.weakest_score,
