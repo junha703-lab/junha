@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type Period = "october" | "january";
+type Period = "april" | "october" | "january";
 type Dimension = {
   id: string;
   label: string;
@@ -121,6 +121,11 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
 const SESSION_KEY = "competency-session-token";
+const periodLabels: Record<Period, string> = {
+  april: "4월",
+  october: "10월",
+  january: "1월",
+};
 
 function blankAnswers() {
   return Object.fromEntries(
@@ -131,14 +136,18 @@ function blankAnswers() {
 }
 
 function blankPeriods(): AnswersByPeriod {
-  return { october: blankAnswers(), january: blankAnswers() };
+  return {
+    april: blankAnswers(),
+    october: blankAnswers(),
+    january: blankAnswers(),
+  };
 }
 
 function answersFromRecords(
   records?: Partial<Record<Period, StoredRecord>>,
 ): AnswersByPeriod {
   const next = blankPeriods();
-  (["october", "january"] as Period[]).forEach((period) => {
+  (["april", "october", "january"] as Period[]).forEach((period) => {
     const saved = records?.[period]?.answers;
     if (saved && typeof saved === "object") {
       next[period] = { ...next[period], ...saved };
@@ -265,7 +274,11 @@ function Radar({
   );
 }
 
-function downloadRadarPng(skills: RadarSkill[], comparison?: RadarSkill[]) {
+function downloadRadarPng(
+  skills: RadarSkill[],
+  period: Period,
+  comparison?: RadarSkill[],
+) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
   canvas.height = 900;
@@ -355,7 +368,9 @@ function downloadRadarPng(skills: RadarSkill[], comparison?: RadarSkill[]) {
   context.font = "700 28px Arial";
   context.textAlign = "left";
   context.fillText(
-    comparison ? "1월 역량 지도 · 10월 비교" : "10월 역량 지도",
+    comparison
+      ? `${periodLabels[period]} 역량 지도 · 10월 비교`
+      : `${periodLabels[period]} 역량 지도`,
     55,
     65,
   );
@@ -365,8 +380,8 @@ function downloadRadarPng(skills: RadarSkill[], comparison?: RadarSkill[]) {
     const link = document.createElement("a");
     link.href = url;
     link.download = comparison
-      ? "1월-역량지도-10월비교.png"
-      : "10월-역량지도.png";
+      ? `${periodLabels[period]}-역량지도-10월비교.png`
+      : `${periodLabels[period]}-역량지도.png`;
     link.click();
     URL.revokeObjectURL(url);
   }, "image/png");
@@ -383,7 +398,7 @@ export default function Home() {
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
-  const [activePeriod, setActivePeriod] = useState<Period>("october");
+  const [activePeriod, setActivePeriod] = useState<Period>("april");
   const [openDimension, setOpenDimension] = useState("learning");
   const [answersByPeriod, setAnswersByPeriod] =
     useState<AnswersByPeriod>(blankPeriods);
@@ -664,7 +679,7 @@ export default function Home() {
         </div>
         <div className="hero-note">
           <span className="note-line" />
-          {activePeriod === "october" ? "10월 평가" : "1월 평가"}
+          {periodLabels[activePeriod]} 평가
           <br />
           <strong>
             {responded} / {total} 문항 응답
@@ -675,6 +690,21 @@ export default function Home() {
       <section className="workspace">
         <aside className="input-panel questionnaire">
           <div className="period-tabs" role="tablist">
+            <button
+              role="tab"
+              aria-selected={activePeriod === "april"}
+              className={activePeriod === "april" ? "active" : ""}
+              onClick={() => {
+                setActivePeriod("april");
+                setSaveState("idle");
+              }}
+            >
+              4월 평가
+              <small>
+                {Object.values(answersByPeriod.april).filter(Boolean).length}/
+                {total}
+              </small>
+            </button>
             <button
               role="tab"
               aria-selected={activePeriod === "october"}
@@ -710,7 +740,7 @@ export default function Home() {
             01 <span>CHECKLIST</span>
           </div>
           <h2>
-            {activePeriod === "october" ? "10월 역량 문항" : "1월 역량 문항"}
+            {periodLabels[activePeriod]} 역량 문항
           </h2>
           <p className="muted">각 문항에 가장 가까운 응답을 선택하세요.</p>
           <div className="scale-guide">
@@ -779,7 +809,7 @@ export default function Home() {
             ))}
           </div>
           <button className="reset-button" onClick={resetPeriod}>
-            ↻ {activePeriod === "october" ? "10월" : "1월"} 응답 초기화
+            ↻ {periodLabels[activePeriod]} 응답 초기화
           </button>
           <button
             className="sheet-button"
@@ -808,14 +838,16 @@ export default function Home() {
           </div>
           <div className="chart-head">
             <div>
-              <h2>{activePeriod === "october" ? "10월" : "1월"} 역량 지도</h2>
+              <h2>{periodLabels[activePeriod]} 역량 지도</h2>
               <p className="muted">
                 문항 평균을 5점 척도의 7각형 그래프로 표시합니다.
               </p>
             </div>
             <button
               className="png-button"
-              onClick={() => downloadRadarPng(skills, comparisonSkills)}
+              onClick={() =>
+                downloadRadarPng(skills, activePeriod, comparisonSkills)
+              }
             >
               PNG로 받기 ↓
             </button>
@@ -829,7 +861,7 @@ export default function Home() {
           <Radar skills={skills} comparison={comparisonSkills} />
           <div className="graph-caption">
             <span className="color-dot" style={{ background: "#e86a33" }} />
-            현재 {activePeriod === "october" ? "10월" : "1월"} 역량 지도
+            현재 {periodLabels[activePeriod]} 역량 지도
             {activePeriod === "january" && (
               <>
                 <span className="compare-chip" />
@@ -849,7 +881,7 @@ export default function Home() {
       </section>
       <footer>
         <span>역량지도 · 교원의 성장을 기록하고 연결합니다.</span>
-        <span>10월·1월 평가를 각각 따로 기록할 수 있습니다.</span>
+        <span>4월·10월·1월 평가를 각각 따로 기록할 수 있습니다.</span>
       </footer>
     </main>
   );
