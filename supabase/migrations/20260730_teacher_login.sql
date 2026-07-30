@@ -81,7 +81,7 @@ begin
     return jsonb_build_object('success', false, 'error', 'INVALID_INPUT');
   end if;
 
-  if coalesce(p_pin, '') !~ '^[0-9]{4}$' then
+  if coalesce(p_pin, '') !~ '^[0-9]{3}$' then
     return jsonb_build_object('success', false, 'error', 'INVALID_INPUT');
   end if;
 
