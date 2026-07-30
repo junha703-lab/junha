@@ -11,6 +11,12 @@ type Dimension = {
   items: string[];
 };
 type RadarSkill = Dimension & { value: number };
+type ComparisonLayer = {
+  period: "april" | "october";
+  label: string;
+  skills: RadarSkill[];
+  className: string;
+};
 type AnswersByPeriod = Record<Period, Record<string, number>>;
 type StoredRecord = {
   answers?: Record<string, number>;
@@ -204,10 +210,10 @@ function makeSkills(answerSet: Record<string, number>): RadarSkill[] {
 
 function Radar({
   skills,
-  comparison,
+  comparisons,
 }: {
   skills: RadarSkill[];
-  comparison?: RadarSkill[];
+  comparisons: ComparisonLayer[];
 }) {
   const values = skills.map((skill) => skill.value);
   return (
@@ -233,12 +239,15 @@ function Radar({
             />
           );
         })}
-        {comparison && (
+        {comparisons.map((comparison) => (
           <polygon
-            points={radarPoints(comparison.map((skill) => skill.value))}
-            className="comparison-line"
+            key={comparison.period}
+            points={radarPoints(
+              comparison.skills.map((skill) => skill.value),
+            )}
+            className={`comparison-line ${comparison.className}`}
           />
-        )}
+        ))}
         <polygon points={radarPoints(values.map(() => 5))} className="data-area" />
         <polygon points={radarPoints(values)} className="data-line" />
         {values.map((value, index) => {
@@ -277,7 +286,7 @@ function Radar({
 function downloadRadarPng(
   skills: RadarSkill[],
   period: Period,
-  comparison?: RadarSkill[],
+  comparisons: ComparisonLayer[],
 ) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
@@ -333,15 +342,16 @@ function downloadRadarPng(
     context.lineWidth = 1;
     context.stroke();
   });
-  if (comparison) {
+  comparisons.forEach((comparison) => {
+    const isApril = comparison.period === "april";
     drawPolygon(
-      comparison.map((skill) => skill.value),
-      "rgba(150,160,155,.13)",
-      "#aeb8b1",
-      3,
-      [8, 7],
+      comparison.skills.map((skill) => skill.value),
+      isApril ? "rgba(116,132,125,.05)" : "rgba(111,139,151,.11)",
+      isApril ? "rgba(126,143,135,.55)" : "rgba(94,126,139,.72)",
+      isApril ? 2.5 : 3,
+      isApril ? [4, 9] : [10, 6],
     );
-  }
+  });
   drawPolygon(
     skills.map((skill) => skill.value),
     "rgba(232,106,51,.18)",
@@ -368,8 +378,8 @@ function downloadRadarPng(
   context.font = "700 28px Arial";
   context.textAlign = "left";
   context.fillText(
-    comparison
-      ? `${periodLabels[period]} 역량 지도 · 10월 비교`
+    comparisons.length
+      ? `${periodLabels[period]} 역량 지도 · 성장 비교`
       : `${periodLabels[period]} 역량 지도`,
     55,
     65,
@@ -379,8 +389,8 @@ function downloadRadarPng(
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = comparison
-      ? `${periodLabels[period]}-역량지도-10월비교.png`
+    link.download = comparisons.length
+      ? `${periodLabels[period]}-역량지도-성장비교.png`
       : `${periodLabels[period]}-역량지도.png`;
     link.click();
     URL.revokeObjectURL(url);
@@ -442,12 +452,28 @@ export default function Home() {
 
   const answers = answersByPeriod[activePeriod];
   const skills = useMemo(() => makeSkills(answers), [answers]);
-  const comparisonSkills = useMemo(
-    () =>
-      activePeriod === "january"
-        ? makeSkills(answersByPeriod.october)
-        : undefined,
-    [activePeriod, answersByPeriod.october],
+  const comparisonLayers = useMemo<ComparisonLayer[]>(
+    () => {
+      const layers: ComparisonLayer[] = [];
+      if (activePeriod === "october" || activePeriod === "january") {
+        layers.push({
+          period: "april",
+          label: "4월 배경",
+          skills: makeSkills(answersByPeriod.april),
+          className: "comparison-april",
+        });
+      }
+      if (activePeriod === "january") {
+        layers.push({
+          period: "october",
+          label: "10월 배경",
+          skills: makeSkills(answersByPeriod.october),
+          className: "comparison-october",
+        });
+      }
+      return layers;
+    },
+    [activePeriod, answersByPeriod.april, answersByPeriod.october],
   );
   const responded = Object.values(answers).filter(Boolean).length;
   const total = Object.keys(answers).length;
@@ -846,28 +872,30 @@ export default function Home() {
             <button
               className="png-button"
               onClick={() =>
-                downloadRadarPng(skills, activePeriod, comparisonSkills)
+                downloadRadarPng(skills, activePeriod, comparisonLayers)
               }
             >
               PNG로 받기 ↓
             </button>
           </div>
-          {activePeriod === "january" && (
+          {activePeriod !== "april" && (
             <p className="comparison-note">
               <i />
-              10월 평가를 연한 배경으로 표시해 성장 변화를 비교합니다.
+              {activePeriod === "october"
+                ? "4월 평가를 가장 연한 점선 배경으로 표시합니다."
+                : "4월은 가장 연한 점선, 10월은 중간 음영으로 겹쳐 성장 변화를 비교합니다."}
             </p>
           )}
-          <Radar skills={skills} comparison={comparisonSkills} />
+          <Radar skills={skills} comparisons={comparisonLayers} />
           <div className="graph-caption">
+            {comparisonLayers.map((comparison) => (
+              <span className="comparison-caption" key={comparison.period}>
+                <i className={`compare-chip ${comparison.className}`} />
+                {comparison.label}
+              </span>
+            ))}
             <span className="color-dot" style={{ background: "#e86a33" }} />
             현재 {periodLabels[activePeriod]} 역량 지도
-            {activePeriod === "january" && (
-              <>
-                <span className="compare-chip" />
-                10월 비교
-              </>
-            )}
           </div>
           <div className="legend-grid">
             {skills.map((skill) => (
