@@ -444,8 +444,8 @@ export default function Home() {
       setLoginError("이름을 입력해 주세요.");
       return;
     }
-    if (!/^\d{4}$/.test(pin)) {
-      setLoginError("비밀번호는 숫자 4자리로 입력해 주세요.");
+    if (!/^\d{3}$/.test(pin)) {
+      setLoginError("비밀번호는 숫자 3자리로 입력해 주세요.");
       return;
     }
 
@@ -465,7 +465,7 @@ export default function Home() {
         } else if (login.error === "INVALID_CREDENTIALS") {
           setLoginError("이름 또는 비밀번호가 올바르지 않습니다.");
         } else {
-          setLoginError("이름과 숫자 4자리 비밀번호를 확인해 주세요.");
+          setLoginError("이름과 숫자 3자리 비밀번호를 확인해 주세요.");
         }
         return;
       }
@@ -581,7 +581,7 @@ export default function Home() {
             <em>입장해 주세요</em>
           </h1>
           <p className="auth-copy">
-            이름과 숫자 4자리 비밀번호를 입력하면
+            이름과 숫자 3자리 비밀번호를 입력하면
             <br />
             나의 문항 기반 성장 기록을 시작할 수 있습니다.
           </p>
@@ -599,13 +599,13 @@ export default function Home() {
               비밀번호
               <input
                 inputMode="numeric"
-                maxLength={4}
+                maxLength={3}
                 type="password"
                 value={pin}
                 onChange={(event) =>
                   setPin(event.target.value.replace(/\D/g, ""))
                 }
-                placeholder="숫자 4자리"
+                placeholder="숫자 3자리"
               />
             </label>
             {loginError && <p className="login-error">{loginError}</p>}
