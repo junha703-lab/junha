@@ -168,18 +168,39 @@ button {
 }
 
 .hero-side {
-  min-width: 250px;
+  min-width: 440px;
   display: grid;
   justify-items: end;
-  gap: 24px;
+  gap: 10px;
+}
+
+.self-assessment-title {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  font-family: ui-rounded, "Arial Rounded MT Bold", "맑은 고딕", sans-serif;
+}
+
+.self-assessment-title span {
+  color: #7b91aa;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.self-assessment-title strong {
+  color: #234c84;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.8px;
 }
 
 .care-mini {
-  width: 250px;
+  width: 440px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid #d8e2ef;
-  border-radius: 18px;
+  border-radius: 22px;
   background: rgba(255, 255, 255, 0.84);
   box-shadow: 0 12px 36px rgba(30, 61, 110, 0.08);
   overflow: hidden;
@@ -188,24 +209,26 @@ button {
 .care-mini span {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 10px 11px;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 9px;
   color: #5d6b7f;
-  font-size: 11px;
+  font-family: ui-rounded, "Arial Rounded MT Bold", "맑은 고딕", sans-serif;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
   border-right: 1px solid #e4eaf2;
-  border-bottom: 1px solid #e4eaf2;
-}
-
-.care-mini span:nth-child(2n) {
-  border-right: 0;
-}
-
-.care-mini span:nth-child(n + 3) {
   border-bottom: 0;
 }
 
+.care-mini span:last-child {
+  border-right: 0;
+}
+
 .care-mini b {
-  font-size: 16px;
+  font-family: ui-rounded, "Arial Rounded MT Bold", sans-serif;
+  font-size: 19px;
+  font-weight: 900;
   line-height: 1;
 }
 
@@ -230,6 +253,7 @@ button {
 }
 
 .hero-note {
+  margin-top: 13px;
   color: #7e8a9c;
   font-size: 12px;
   line-height: 1.6;
@@ -846,7 +870,7 @@ footer {
   position: relative;
   z-index: 1;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.96);
 }
 
@@ -865,13 +889,18 @@ footer {
 }
 
 .care-step strong {
-  font-size: 22px;
+  font-family: ui-rounded, "Arial Rounded MT Bold", sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
 }
 
 .care-step span {
   color: #536276;
+  font-family: ui-rounded, "Arial Rounded MT Bold", "맑은 고딕", sans-serif;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.15px;
 }
 
 .care-step i {
@@ -1289,6 +1318,20 @@ footer {
 }
 
 @media (max-width: 900px) {
+  .hero-side {
+    min-width: 360px;
+  }
+
+  .care-mini {
+    width: 360px;
+  }
+
+  .care-mini span {
+    gap: 4px;
+    padding-inline: 6px;
+    font-size: 9px;
+  }
+
   .admin-period-grid {
     grid-template-columns: 1fr;
   }
@@ -1380,8 +1423,26 @@ footer {
     justify-items: start;
   }
 
+  .self-assessment-title {
+    justify-items: start;
+  }
+
+  .self-assessment-title strong {
+    font-size: 21px;
+  }
+
   .care-mini {
     width: 100%;
+  }
+
+  .care-mini span {
+    gap: 3px;
+    padding: 11px 4px;
+    font-size: 8px;
+  }
+
+  .care-mini b {
+    font-size: 16px;
   }
 
   .hero-note {
