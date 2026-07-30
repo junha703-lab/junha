@@ -29,6 +29,9 @@ type BookRecommendation = {
   popularityLabel?: string;
   price?: number;
   salePrice?: number;
+  publishedDate?: string;
+  publicationYear?: number;
+  salesStatus?: string;
   kyoboUrl: string;
   youngpoongUrl: string;
   naverUrl: string;
@@ -95,9 +98,14 @@ function RecommendationReason({ reason }: { reason: string }) {
         onClick={() => setOpen((current) => !current)}
       >
         왜 추천했나요?
-        <span aria-hidden="true">{open ? "−" : "+"}</span>
+        <span className="reason-chevron" aria-hidden="true">⌄</span>
       </button>
-      {open && <p className="card-reason">{reason}</p>}
+      {open && (
+        <div className="recommendation-reason-answer">
+          <strong>맞춤 추천 근거</strong>
+          <p className="card-reason">{reason}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -137,6 +145,14 @@ function BookCard({
           {book.authors.join(", ")}
           <span>{book.publisher}</span>
         </p>
+        {(book.publicationYear || book.salesStatus) && (
+          <p className="book-facts">
+            {book.publicationYear && (
+              <span>{book.publicationYear}년 출간</span>
+            )}
+            {book.salesStatus && <span>{book.salesStatus}</span>}
+          </p>
+        )}
         {displayedPrice > 0 && (
           <p className="book-price">
             <span>카카오 등록가</span>
@@ -228,7 +244,7 @@ function TrainingCard({
       <RecommendationReason reason={item.reason} />
       <div className="card-actions">
         <button type="button" onClick={onUseKeyword}>
-          검색창에 넣기
+          연수 통합검색창에 넣기
         </button>
         <button type="button" onClick={onCopy}>
           {copied ? "복사됨 ✓" : "검색어 복사"}
@@ -413,6 +429,16 @@ export default function GrowthRecommendations({
     }
   }
 
+  function useTrainingKeyword(keyword: string) {
+    setTrainingQuery(keyword);
+    window.requestAnimationFrame(() => {
+      const panel = document.getElementById("training-search-panel");
+      const input = document.getElementById("training-search-keyword");
+      panel?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (input instanceof HTMLInputElement) input.focus({ preventScroll: true });
+    });
+  }
+
   const focusedTrainingIndex =
     training.items.length > 0
       ? trainingFocusIndex % training.items.length
@@ -495,7 +521,7 @@ export default function GrowthRecommendations({
                     copied={copiedKeyword === focusedTraining.keyword}
                     onCopy={() => void copyKeyword(focusedTraining.keyword)}
                     onUseKeyword={() =>
-                      setTrainingQuery(focusedTraining.keyword)
+                      useTrainingKeyword(focusedTraining.keyword)
                     }
                     onOther={
                       training.items.length > 1
@@ -520,7 +546,9 @@ export default function GrowthRecommendations({
                             key={item.keyword}
                             copied={copiedKeyword === item.keyword}
                             onCopy={() => void copyKeyword(item.keyword)}
-                            onUseKeyword={() => setTrainingQuery(item.keyword)}
+                            onUseKeyword={() =>
+                              useTrainingKeyword(item.keyword)
+                            }
                             onChoose={() => setTrainingFocusIndex(index)}
                           />
                         ))}
@@ -528,7 +556,10 @@ export default function GrowthRecommendations({
                     </details>
                   )}
                 </div>
-                <div className="training-search-panel">
+                <div
+                  className="training-search-panel"
+                  id="training-search-panel"
+                >
                   <div>
                     <strong>연수 통합검색</strong>
                     <span>
@@ -570,7 +601,8 @@ export default function GrowthRecommendations({
               <div>
                 <h3>가장 먼저 읽어볼 도서</h3>
                 <p>
-                  관련도와 공개 인기도 신호를 반영한 대표 추천 1권입니다.
+                  관련도·최신성·판매 상태와 공개 평판을 반영한 대표 추천
+                  1권입니다.
                 </p>
               </div>
             </div>
@@ -620,8 +652,8 @@ export default function GrowthRecommendations({
                   <div>
                     <strong>도서 직접 검색</strong>
                     <span>
-                      주제를 입력하면 관련도 우선, 이용자 평가 참고 순으로
-                      실제 도서를 찾아드립니다.
+                      주제를 입력하면 관련도와 최신성·판매 상태를 먼저
+                      확인하고 공개 평가를 참고해 실제 도서를 찾습니다.
                     </span>
                   </div>
                   <div className="book-suggestion-chips">

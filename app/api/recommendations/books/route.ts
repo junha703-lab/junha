@@ -24,6 +24,8 @@ type KakaoBook = {
   contents?: string;
   price?: number;
   sale_price?: number;
+  datetime?: string;
+  status?: string;
 };
 
 type KakaoBookResponse = {
@@ -64,6 +66,7 @@ type RankedBook = {
   relevanceScore: number;
   ratingsCount: number;
   averageRating: number;
+  totalScore: number;
   sourcePosition: number;
   queryIndex: number;
 };
@@ -72,20 +75,36 @@ async function fetchKakaoBooks(query: string, apiKey: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const url = new URL("https://dapi.kakao.com/v3/search/book");
-    url.searchParams.set("query", query);
-    url.searchParams.set("sort", "accuracy");
-    url.searchParams.set("size", "20");
-    const response = await fetch(url, {
-      headers: { Authorization: `KakaoAK ${apiKey}` },
-      signal: controller.signal,
-      cache: "no-store",
-    });
-    if (!response.ok) {
-      throw new Error(`KAKAO_BOOK_API_${response.status}`);
+    async function load(sort: "accuracy" | "latest", size: number) {
+      const url = new URL("https://dapi.kakao.com/v3/search/book");
+      url.searchParams.set("query", query);
+      url.searchParams.set("sort", sort);
+      url.searchParams.set("size", String(size));
+      const response = await fetch(url, {
+        headers: { Authorization: `KakaoAK ${apiKey}` },
+        signal: controller.signal,
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        throw new Error(`KAKAO_BOOK_API_${response.status}`);
+      }
+      const result = (await response.json()) as KakaoBookResponse;
+      return result.documents ?? [];
     }
-    const result = (await response.json()) as KakaoBookResponse;
-    return result.documents ?? [];
+
+    const [accuracy, latest] = await Promise.all([
+      load("accuracy", 30),
+      load("latest", 20),
+    ]);
+    const seen = new Set<string>();
+    return [...accuracy, ...latest].filter((book) => {
+      const identity =
+        book.isbn?.replace(/\D/g, "") ||
+        canonicalBookTitle(book.title ?? "");
+      if (!identity || seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    });
   } finally {
     clearTimeout(timeout);
   }
@@ -172,6 +191,75 @@ function findPopularity(
   return { ratingsCount: 0, averageRating: 0 };
 }
 
+function publicationYear(datetime?: string) {
+  const year = Number(datetime?.slice(0, 4));
+  const currentYear = new Date().getUTCFullYear();
+  return Number.isInteger(year) && year >= 1900 && year <= currentYear + 1
+    ? year
+    : 0;
+}
+
+function isUnavailable(status?: string) {
+  return /(절판|품절|판매\s*중지|구매\s*불가)/.test(status?.trim() ?? "");
+}
+
+function freshnessScore(year: number) {
+  if (!year) return 0;
+  const age = new Date().getUTCFullYear() - year;
+  if (age <= 2) return 34;
+  if (age <= 4) return 27;
+  if (age <= 7) return 18;
+  if (age <= 10) return 8;
+  if (age <= 15) return -6;
+  if (age <= 20) return -22;
+  return -45;
+}
+
+function popularityScore(popularity: PopularitySignal) {
+  const countScore = Math.min(
+    24,
+    Math.log10(popularity.ratingsCount + 1) * 9,
+  );
+  const ratingScore =
+    popularity.averageRating > 0
+      ? Math.max(0, popularity.averageRating - 3) * 5
+      : 0;
+  return countScore + ratingScore;
+}
+
+function makeDetailedReason({
+  title,
+  query,
+  configLabel,
+  bookFocus,
+  year,
+  status,
+  popularity,
+  isCustomSearch,
+}: {
+  title: string;
+  query: string;
+  configLabel: string;
+  bookFocus: string;
+  year: number;
+  status: string;
+  popularity: PopularitySignal;
+  isCustomSearch: boolean;
+}) {
+  const relevance = isCustomSearch
+    ? `『${title}』는 사용자가 입력한 ‘${query}’ 검색어와 제목·소개 정보의 관련도가 높아 우선 살펴볼 책으로 골랐습니다.`
+    : `『${title}』는 ‘${query}’ 주제와 관련성이 높아 ${configLabel}의 ${bookFocus}을 보완할 자료로 골랐습니다.`;
+  const freshness =
+    year > 0
+      ? `${year}년 출간 도서이며${status ? ` 카카오 도서 정보상 ‘${status}’ 상태로` : ""} 확인되어, 오래되었거나 명시적으로 절판·품절된 책은 추천에서 제외하는 기준을 통과했습니다.`
+      : `${status ? `카카오 도서 정보상 ‘${status}’ 상태이며 ` : ""}명시적으로 절판·품절된 책은 제외했지만 출간연도는 확인되지 않아 상세 페이지에서 개정판 여부를 함께 확인하는 것이 좋습니다.`;
+  const reputation =
+    popularity.ratingsCount > 0
+      ? `평판 참고값으로 Google Books 공개 평가 ${popularity.ratingsCount.toLocaleString("ko-KR")}건${popularity.averageRating > 0 ? `, 평균 ${popularity.averageRating.toFixed(1)}점` : ""}이 확인되어 관련도 다음의 보조 기준으로 반영했습니다.`
+      : "공개 평점 건수는 확인되지 않아 평판을 임의로 추정하지 않았고, 카카오 검색 관련도·출간시점·판매 상태를 중심으로 판단했습니다.";
+  return `${relevance} ${freshness} ${reputation}`;
+}
+
 function normalizeBook(
   book: KakaoBook,
   dimension: CompetencyId,
@@ -184,16 +272,32 @@ function normalizeBook(
     ? book.authors.map((author) => author.trim()).filter(Boolean)
     : [];
   const detailUrl = book.url?.trim();
-  if (!title || authors.length === 0 || !detailUrl) return null;
+  const salesStatus = book.status?.trim() ?? "";
+  if (
+    !title ||
+    authors.length === 0 ||
+    !detailUrl ||
+    isUnavailable(salesStatus)
+  ) {
+    return null;
+  }
 
   const config = competencyRecommendations[dimension];
-  const reason = isCustomSearch
-    ? `카카오 도서 검색에서 ‘${query}’ 관련 실제 도서로 확인되었습니다. 제목과 저자, 상세 정보를 확인해 활용해 보세요.`
-    : `카카오 도서 검색에서 확인된 실제 도서입니다. ${config.bookFocus} 역량을 보완하는 데 활용해 보세요.`;
+  const year = publicationYear(book.datetime);
+  const reason = makeDetailedReason({
+    title,
+    query,
+    configLabel: config.label,
+    bookFocus: config.bookFocus,
+    year,
+    status: salesStatus,
+    popularity,
+    isCustomSearch,
+  });
   const popularityLabel =
     popularity.ratingsCount > 0
-      ? `인기도 참고 · Google Books 평가 ${popularity.ratingsCount.toLocaleString("ko-KR")}개${popularity.averageRating > 0 ? ` · ${popularity.averageRating.toFixed(1)}점` : ""}`
-      : "관련도 우선 · 카카오 검색 상위";
+      ? `평판 참고 · Google Books 공개 평가 ${popularity.ratingsCount.toLocaleString("ko-KR")}건${popularity.averageRating > 0 ? ` · ${popularity.averageRating.toFixed(1)}점` : ""}`
+      : "공개 평점 없음 · 관련도·최신성·판매 상태로 선정";
   return {
     title,
     authors,
@@ -205,6 +309,9 @@ function normalizeBook(
     popularityLabel,
     price: Math.max(0, Number(book.price ?? 0)),
     salePrice: Math.max(0, Number(book.sale_price ?? 0)),
+    publishedDate: book.datetime?.trim() || "",
+    publicationYear: year || undefined,
+    salesStatus,
     ...makeBookSearchLinks(title, authors),
   };
 }
@@ -235,6 +342,9 @@ function scoreBook(book: KakaoBook, query: string) {
 }
 
 function compareRankedBooks(a: RankedBook, b: RankedBook) {
+  if (a.totalScore !== b.totalScore) {
+    return b.totalScore - a.totalScore;
+  }
   if (a.relevanceScore !== b.relevanceScore) {
     return b.relevanceScore - a.relevanceScore;
   }
@@ -294,12 +404,19 @@ async function searchBooksForQueries(
         popularitySignal,
       );
       if (!normalized) return;
+      const year = publicationYear(document.datetime);
+      const relevanceScore = scoreBook(document, query);
       ranked.push({
         book: normalized,
         identity: canonicalBookTitle(normalized.title),
-        relevanceScore: scoreBook(document, query),
+        relevanceScore,
         ratingsCount: popularitySignal.ratingsCount,
         averageRating: popularitySignal.averageRating,
+        totalScore:
+          relevanceScore +
+          freshnessScore(year) +
+          popularityScore(popularitySignal) +
+          (document.status?.includes("정상") ? 10 : 0),
         sourcePosition: position,
         queryIndex,
       });
@@ -404,8 +521,8 @@ export async function POST(request: Request) {
     const queries = customQuery ? [customQuery] : config.bookQueries;
     const queryText = queries.join(" | ");
     const cacheVersion = customQuery
-      ? "kakao-book-search:v4-price"
-      : "kakao-books:v4-price";
+      ? "kakao-book-search:v5-freshness-reason"
+      : "kakao-books:v5-freshness-reason";
     const cacheKey = await sha256(
       `${cacheVersion}:${context.weakest_dimension}:${queryText}`,
     );

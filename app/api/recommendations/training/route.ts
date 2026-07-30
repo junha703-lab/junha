@@ -47,7 +47,8 @@ export async function POST(request: Request) {
       generated.every(
         (item, index) =>
           cached[index]?.keyword === item.keyword &&
-          cached[index]?.searchUrl === item.searchUrl,
+          cached[index]?.searchUrl === item.searchUrl &&
+          cached[index]?.reason === item.reason,
       );
     const recommendations: TrainingRecommendation[] = cachedMatches
       ? cached.slice(0, 3)
