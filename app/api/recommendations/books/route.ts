@@ -80,6 +80,8 @@ function canonicalBookTitle(title: string) {
 function normalizeBook(
   book: KakaoBook,
   dimension: CompetencyId,
+  query: string,
+  isCustomSearch: boolean,
 ): BookRecommendation | null {
   const title = cleanBookTitle(book.title ?? "");
   const authors = Array.isArray(book.authors)
@@ -89,6 +91,9 @@ function normalizeBook(
   if (!title || authors.length === 0 || !detailUrl) return null;
 
   const config = competencyRecommendations[dimension];
+  const reason = isCustomSearch
+    ? `카카오 도서 검색에서 ‘${query}’ 관련 실제 도서로 확인되었습니다. 제목과 저자, 상세 정보를 확인해 활용해 보세요.`
+    : `카카오 도서 검색에서 확인된 실제 도서입니다. ${config.bookFocus} 역량을 보완하는 데 활용해 보세요.`;
   return {
     title,
     authors,
@@ -96,7 +101,7 @@ function normalizeBook(
     thumbnail: book.thumbnail?.trim() || "",
     detailUrl,
     isbn: book.isbn?.trim() || "",
-    reason: `카카오 도서 검색에서 확인된 실제 도서입니다. ${config.bookFocus} 역량을 보완하는 데 활용해 보세요.`,
+    reason,
     ...makeBookSearchLinks(title, authors),
   };
 }
@@ -140,6 +145,7 @@ async function searchBooksForQueries(
   queries: readonly string[],
   apiKey: string,
   limit: number,
+  isCustomSearch: boolean,
 ): Promise<BookRecommendation[]> {
   const results = await Promise.allSettled(
     queries.map((query) => fetchKakaoBooks(query, apiKey)),
@@ -150,7 +156,12 @@ async function searchBooksForQueries(
     if (result.status !== "fulfilled") return;
     const query = queries[queryIndex];
     result.value.forEach((document, position) => {
-      const normalized = normalizeBook(document, dimension);
+      const normalized = normalizeBook(
+        document,
+        dimension,
+        query,
+        isCustomSearch,
+      );
       if (!normalized) return;
       ranked.push({
         book: normalized,
@@ -259,7 +270,7 @@ export async function POST(request: Request) {
     const queries = customQuery ? [customQuery] : config.bookQueries;
     const queryText = queries.join(" | ");
     const cacheVersion = customQuery
-      ? "kakao-book-search:v1"
+      ? "kakao-book-search:v2"
       : "kakao-books:v2-elementary";
     const cacheKey = await sha256(
       `${cacheVersion}:${context.weakest_dimension}:${queryText}`,
@@ -279,6 +290,7 @@ export async function POST(request: Request) {
         queries,
         apiKey,
         limit,
+        Boolean(customQuery),
       );
       source = "kakao-api";
       if (recommendations.length === 0) {
