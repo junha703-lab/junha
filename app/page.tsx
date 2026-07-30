@@ -597,6 +597,17 @@ function AdminDashboard({
                             comparisons={comparisons}
                           />
                         </div>
+                        <div
+                          className="admin-map-legend"
+                          aria-label={`${periodLabels[period]} 역량지도 범례`}
+                        >
+                          {periodSkills.map((skill) => (
+                            <span key={skill.id}>
+                              <i style={{ background: skill.color }} />
+                              {skill.short}
+                            </span>
+                          ))}
+                        </div>
                         {comparisons.length > 0 && (
                           <div className="admin-comparison-caption">
                             {comparisons.map((comparison) => (
