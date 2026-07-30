@@ -681,22 +681,6 @@ button {
   gap: 5px;
 }
 
-.legend-grid {
-  padding-top: 15px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px 15px;
-  border-top: 1px solid var(--line);
-  color: #68788e;
-  font-size: 10px;
-}
-
-.legend-grid span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
 footer {
   max-width: 1120px;
   margin: 0 auto;
@@ -1103,26 +1087,6 @@ footer {
   font-size: 11px;
 }
 
-.admin-legend {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px 12px;
-}
-
-.admin-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-}
-
-.admin-legend i {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-}
-
 .admin-list {
   display: grid;
   gap: 20px;
@@ -1261,48 +1225,20 @@ footer {
 }
 
 .admin-radar {
-  min-height: 245px;
+  min-height: 275px;
   display: grid;
   place-items: center;
 }
 
 .admin-radar .radar-wrap {
-  width: min(225px, 100%);
+  width: min(245px, calc(100% - 70px));
   margin: 4px auto 0;
 }
 
 .admin-radar .axis-label {
-  display: none;
-}
-
-.admin-map-legend {
-  margin: 0 0 13px;
-  padding: 11px 12px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px 10px;
-  border: 1px solid #e9eff6;
-  border-radius: 16px;
-  background: #fff;
-}
-
-.admin-map-legend span {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #65758b;
-  font-size: 9.5px;
-  font-weight: 650;
-  line-height: 1.25;
-}
-
-.admin-map-legend i {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
-  border-radius: 999px;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+  color: #607089;
+  font-size: 8.5px;
+  font-weight: 750;
 }
 
 .admin-comparison-caption {
@@ -1362,7 +1298,7 @@ footer {
   }
 
   .admin-radar .radar-wrap {
-    width: min(270px, 75vw);
+    width: min(270px, calc(100% - 70px));
   }
 
   .auth-shell {
@@ -1412,10 +1348,6 @@ footer {
   .admin-guide {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .admin-legend {
-    justify-content: flex-start;
   }
 
   .admin-teacher-head {
