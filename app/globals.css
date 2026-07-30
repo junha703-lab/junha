@@ -497,11 +497,24 @@ button {
 }
 
 .comparison-line {
-  fill: #aeb8b1;
-  fill-opacity: 0.12;
-  stroke: #aeb8b1;
   stroke-width: 1.25;
-  stroke-dasharray: 3 2;
+  stroke-linejoin: round;
+}
+
+.comparison-line.comparison-april {
+  fill: #7f9189;
+  fill-opacity: 0.05;
+  stroke: #8fa199;
+  stroke-opacity: 0.58;
+  stroke-dasharray: 1.5 3.2;
+}
+
+.comparison-line.comparison-october {
+  fill: #6f8b97;
+  fill-opacity: 0.11;
+  stroke: #6a8793;
+  stroke-opacity: 0.78;
+  stroke-dasharray: 4 2.5;
 }
 
 .axis-label {
@@ -516,6 +529,7 @@ button {
 
 .graph-caption {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -528,10 +542,23 @@ button {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #aeb8b1;
-  border: 1px dashed #84908a;
   display: inline-block;
-  margin-left: 10px;
+}
+
+.compare-chip.comparison-april {
+  background: rgba(143, 161, 153, 0.18);
+  border: 1px dashed #8fa199;
+}
+
+.compare-chip.comparison-october {
+  background: rgba(106, 135, 147, 0.22);
+  border: 1px dashed #6a8793;
+}
+
+.comparison-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .legend-grid {
