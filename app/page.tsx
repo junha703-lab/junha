@@ -1006,6 +1006,10 @@ export default function Home() {
           </p>
         </div>
         <div className="hero-side">
+          <div className="self-assessment-title">
+            <span>SELF COMPETENCY CHECK</span>
+            <strong>자기역량진단</strong>
+          </div>
           <div className="care-mini" aria-label="CARE 단계">
             {careSteps.map((step) => (
               <span className={step.className} key={step.letter}>
