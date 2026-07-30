@@ -88,7 +88,7 @@ const dimensions: Dimension[] = [
   {
     id: "professional",
     label: "전문성 개발 역량",
-    short: "전문성 개발",
+    short: "전문성개발",
     color: "#65a966",
     items: [
       "교사 연구회 혹은 연구 모임에 적극적으로 참여하여 새롭게 학습한 지식이나 경험을 수업과 생활지도에 적극적으로 반영하는가?",
@@ -98,7 +98,7 @@ const dimensions: Dimension[] = [
   {
     id: "smart",
     label: "미래스마트형 역량",
-    short: "미래스마트",
+    short: "C미래스마트",
     color: "#3d75bd",
     items: [
       "학생 특성과 요구에 적합한 수업자료 및 매체(에듀테크, AI 등)를 적극적으로 활용하는가?",
@@ -107,7 +107,7 @@ const dimensions: Dimension[] = [
   {
     id: "culture",
     label: "예술문화형 역량",
-    short: "예술문화",
+    short: "A예술문화",
     color: "#8665b0",
     items: [
       "학생의 적성과 특기를 고려하여 예술·문화·진로 및 창의적인 표현 활동의 기회를 제공하는가?",
@@ -116,7 +116,7 @@ const dimensions: Dimension[] = [
   {
     id: "empathy",
     label: "소통공감형 역량",
-    short: "소통공감",
+    short: "R공감소통",
     color: "#d35e91",
     items: [
       "독서, 토의·토론, 협동학습 등으로 상호작용을 촉진하고, 공감적 상담을 통해 학생의 당면 문제를 원만히 지원하는가?",
@@ -125,7 +125,7 @@ const dimensions: Dimension[] = [
   {
     id: "whole",
     label: "전인적 성장 역량",
-    short: "전인적 성장",
+    short: "E전인적 성장",
     color: "#2f9e9b",
     items: [
       "체육, 놀이 등 다양한 활동을 바탕으로 건전한 가치관과 도덕성을 갖춘 전인적 성장을 지도하는가?",
@@ -507,14 +507,6 @@ function AdminDashboard({
             <strong>지도 읽는 방법</strong>
             <span>현재 월은 진하게, 이전 평가는 점선 배경으로 표시됩니다.</span>
           </div>
-          <div className="admin-legend">
-            {dimensions.map((dimension) => (
-              <span key={dimension.id}>
-                <i style={{ background: dimension.color }} />
-                {dimension.short}
-              </span>
-            ))}
-          </div>
         </div>
 
         {state === "error" && (
@@ -596,17 +588,6 @@ function AdminDashboard({
                             skills={periodSkills}
                             comparisons={comparisons}
                           />
-                        </div>
-                        <div
-                          className="admin-map-legend"
-                          aria-label={`${periodLabels[period]} 역량지도 범례`}
-                        >
-                          {periodSkills.map((skill) => (
-                            <span key={skill.id}>
-                              <i style={{ background: skill.color }} />
-                              {skill.short}
-                            </span>
-                          ))}
                         </div>
                         {comparisons.length > 0 && (
                           <div className="admin-comparison-caption">
@@ -1227,14 +1208,6 @@ export default function Home() {
             ))}
             <span className="color-dot" style={{ background: "#2657ae" }} />
             현재 {periodLabels[activePeriod]} 역량 지도
-          </div>
-          <div className="legend-grid">
-            {skills.map((skill) => (
-              <span key={skill.id}>
-                <i className="color-dot" style={{ background: skill.color }} />
-                {skill.short}
-              </span>
-            ))}
           </div>
         </section>
       </section>
