@@ -21,10 +21,16 @@ export type RecommendationContext = {
 };
 
 export type TrainingRecommendation = {
+  title: string;
   keyword: string;
   provider: "대전교육연수원";
   reason: string;
   searchUrl: string;
+  detailUrl: string;
+  status: string;
+  applicationPeriod?: string;
+  educationPeriod?: string;
+  target?: string;
 };
 
 export type BookRecommendation = {
@@ -55,7 +61,7 @@ type CompetencyRecommendationConfig = {
 };
 
 export const TETI_SEARCH_URL =
-  "https://www.teti.kr/homepage/search/selectTotalSearchList.do";
+  "https://www.teti.kr/homepage/educourse/eduCourseList.do";
 
 export const competencyRecommendations: Record<
   CompetencyId,
@@ -338,11 +344,248 @@ export function makeTrainingRecommendations(
 ): TrainingRecommendation[] {
   const config = competencyRecommendations[dimension];
   return config.trainingKeywords.map((keyword) => ({
+    title: `${keyword} 관련 연수 과정 검색`,
     keyword,
     provider: "대전교육연수원",
     reason: `‘${keyword}’는 ${config.label} 진단에서 확인한 ${config.bookFocus}의 보완과 직접 연결되는 주제입니다. ${trainingKeywordInsights[keyword]} 대전교육연수원에서는 긴 문장보다 이 핵심어로 검색한 뒤 대상·시간·직무 관련성을 비교하는 방식이 효율적입니다.`,
-    searchUrl: `${TETI_SEARCH_URL}?searchKeyword=${encodeURIComponent(keyword)}`,
+    searchUrl: makeTetiCourseSearchUrl(keyword),
+    detailUrl: makeTetiCourseSearchUrl(keyword),
+    status: "과정 검색",
   }));
+}
+
+const TETI_ORIGIN = "https://www.teti.kr";
+const TETI_COURSE_LIST_URL = `${TETI_ORIGIN}/homepage/educourse/eduCourseList.do`;
+const TETI_CACHE_MS = 1000 * 60 * 30;
+
+type TetiCourse = {
+  id: string;
+  title: string;
+  courseType: string;
+  applicationPeriod?: string;
+  educationPeriod?: string;
+  target?: string;
+  status: string;
+};
+
+const tetiCourseCache = new Map<
+  string,
+  { expiresAt: number; courses: TetiCourse[] }
+>();
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) =>
+      String.fromCodePoint(Number.parseInt(hex, 16)),
+    )
+    .replace(/&#(\d+);/g, (_, decimal: string) =>
+      String.fromCodePoint(Number.parseInt(decimal, 10)),
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findInfo(card: string, label: string) {
+  const match = card.match(
+    new RegExp(
+      `<p[^>]*class="[^"]*info[^"]*"[^>]*>[\\s\\S]*?<i>[\\s\\S]*?${label}[\\s\\S]*?</i>([\\s\\S]*?)</p>`,
+      "i",
+    ),
+  );
+  return match ? decodeHtml(match[1]) : undefined;
+}
+
+function parseTetiCourses(html: string) {
+  const cards = html.match(
+    /<li[^>]*class="[^"]*sub_list_card_wrap_2[^"]*"[^>]*>[\s\S]*?<\/li>/gi,
+  );
+  if (!cards) return [];
+
+  const seen = new Set<string>();
+  const courses: TetiCourse[] = [];
+  for (const card of cards) {
+    const id = card.match(/fnAtnlcAplyDetail\('([^']+)'\)/)?.[1];
+    const titleMarkup = card.match(
+      /class="title"[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i,
+    )?.[1];
+    if (!id || !titleMarkup || seen.has(id)) continue;
+
+    seen.add(id);
+    const courseType = decodeHtml(
+      card.match(/<p[^>]*class="[^"]*blue[^"]*"[^>]*>([\s\S]*?)<\/p>/i)?.[1] ??
+        "",
+    );
+    const applicationPeriod = findInfo(card, "신청");
+    const educationPeriod = findInfo(card, "교육");
+    const target = findInfo(card, "대상");
+    const status = /btn_learning_apply|신청하기/i.test(card)
+      ? "신청 가능"
+      : /학습중|교육중/i.test(card)
+        ? "운영 중"
+        : "운영 과정";
+
+    courses.push({
+      id,
+      title: decodeHtml(titleMarkup),
+      courseType,
+      applicationPeriod,
+      educationPeriod,
+      target,
+      status,
+    });
+  }
+  return courses;
+}
+
+export function makeTetiCourseSearchUrl(keyword: string) {
+  const params = new URLSearchParams({
+    srchCrseNm: keyword,
+    srchEduTrgtClId: "01",
+    srchStatusOrdg: "1",
+    srchYear: String(new Date().getFullYear()),
+    srchMonth: "0",
+    perPage: "100",
+  });
+  return `${TETI_COURSE_LIST_URL}?${params.toString()}`;
+}
+
+function tetiCourseDetailUrl(id: string) {
+  return `${TETI_ORIGIN}/lh/ms/ac/atnlcAplyDetailView.do?srchCrseGnrtnId=${encodeURIComponent(id)}`;
+}
+
+async function fetchTetiCourses(keyword: string) {
+  const cached = tetiCourseCache.get(keyword);
+  if (cached && cached.expiresAt > Date.now()) return cached.courses;
+
+  const response = await fetch(makeTetiCourseSearchUrl(keyword), {
+    headers: { Accept: "text/html,application/xhtml+xml" },
+    next: { revalidate: 1800 },
+  });
+  if (!response.ok) throw new Error(`TETI_FETCH_FAILED:${response.status}`);
+
+  const courses = parseTetiCourses(await response.text());
+  tetiCourseCache.set(keyword, {
+    courses,
+    expiresAt: Date.now() + TETI_CACHE_MS,
+  });
+  return courses;
+}
+
+const courseRelevanceSignals: Record<CompetencyId, string[]> = {
+  learning: ["수업", "학습", "평가", "교육과정", "교과", "질문", "피드백"],
+  guidance: ["생활", "학급", "상담", "학교폭력", "인성", "관계", "존중", "배려", "안전"],
+  professional: ["교사", "연구", "공동체", "교육과정", "수업", "전문성", "자료"],
+  smart: ["인공지능", "ai", "디지털", "에듀테크", "데이터", "소프트웨어"],
+  culture: ["예술", "문화", "미술", "음악", "진로", "창의", "표현"],
+  empathy: ["상담", "소통", "토론", "독서", "협력", "관계", "공감", "회복"],
+  whole: ["체육", "놀이", "인성", "도덕", "건강", "성장", "스포츠"],
+};
+
+const coreCourseSignals: Partial<Record<CompetencyId, string[]>> = {
+  learning: ["수업", "평가", "교육과정"],
+  guidance: ["생활", "학급", "상담", "학교폭력", "인성"],
+  professional: ["교사", "연구", "공동체", "전문성"],
+  smart: ["인공지능", "ai", "디지털", "에듀테크"],
+  culture: ["예술", "미술", "음악", "진로"],
+  empathy: ["상담", "소통", "토론", "독서", "공감"],
+  whole: ["체육", "놀이", "인성", "도덕"],
+};
+
+const unrelatedCourseSignals = [
+  "산업", "시설", "청소", "채용", "근로", "관리감독", "직원", "공무원", "법정의무",
+];
+
+function relevanceScore(
+  course: TetiCourse,
+  keyword: string,
+  dimension: CompetencyId,
+) {
+  const text = `${course.title} ${course.courseType} ${course.target ?? ""}`.toLowerCase();
+  const normalizedKeyword = keyword.toLowerCase();
+  const keywordScore = text.includes(normalizedKeyword) ? 90 : 0;
+  const signalScore = courseRelevanceSignals[dimension].reduce(
+    (score, signal) =>
+      score +
+      (text.includes(signal)
+        ? coreCourseSignals[dimension]?.includes(signal)
+          ? 95
+          : 35
+        : 0),
+    0,
+  );
+  const elementaryScore = text.includes("초등") ? 55 : text.includes("교원") ? 25 : 0;
+  const schoolLevelPenalty = /유치원|중등/.test(text) ? 90 : 0;
+  const unrelatedPenalty = unrelatedCourseSignals.reduce(
+    (score, signal) => score + (text.includes(signal) ? 150 : 0),
+    0,
+  );
+  const statusScore = course.status === "신청 가능" ? 30 : course.status === "운영 중" ? 20 : 10;
+  return (
+    keywordScore +
+    signalScore +
+    elementaryScore +
+    statusScore -
+    unrelatedPenalty -
+    schoolLevelPenalty
+  );
+}
+
+export async function findLiveTrainingRecommendations(
+  dimension: CompetencyId,
+): Promise<TrainingRecommendation[]> {
+  const config = competencyRecommendations[dimension];
+  const results = await Promise.allSettled(
+    config.trainingKeywords.map(async (keyword) => ({
+      keyword,
+      courses: await fetchTetiCourses(keyword),
+    })),
+  );
+
+  const candidates = results.flatMap((result) =>
+    result.status === "fulfilled"
+      ? result.value.courses.map((course) => ({
+          ...course,
+          keyword: result.value.keyword,
+        }))
+      : [],
+  );
+  const unique = new Map<string, (typeof candidates)[number]>();
+  for (const candidate of candidates) {
+    const current = unique.get(candidate.id);
+    if (
+      !current ||
+      relevanceScore(candidate, candidate.keyword, dimension) >
+        relevanceScore(current, current.keyword, dimension)
+    ) {
+      unique.set(candidate.id, candidate);
+    }
+  }
+
+  return Array.from(unique.values())
+    .sort(
+      (left, right) =>
+        relevanceScore(right, right.keyword, dimension) -
+          relevanceScore(left, left.keyword, dimension) ||
+        left.title.localeCompare(right.title, "ko"),
+    )
+    .slice(0, 5)
+    .map((course) => ({
+      title: course.title,
+      keyword: course.keyword,
+      provider: "대전교육연수원" as const,
+      status: course.status,
+      applicationPeriod: course.applicationPeriod,
+      educationPeriod: course.educationPeriod,
+      target: course.target,
+      detailUrl: tetiCourseDetailUrl(course.id),
+      searchUrl: makeTetiCourseSearchUrl(course.keyword),
+      reason: `대전교육연수원 과정 목록에서 ‘${course.keyword}’ 주제로 확인된 ${course.status} 과정입니다. ${config.label}의 ${config.bookFocus} 보완과 맞닿아 있으며, 과정명에 포함된 핵심 내용과 교원 대상 정보를 기준으로 우선 추천했습니다.`,
+    }));
 }
 
 export function makeBookSearchLinks(title: string, authors: string[]) {

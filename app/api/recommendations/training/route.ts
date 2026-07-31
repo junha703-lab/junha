@@ -3,12 +3,11 @@ import { NextResponse } from "next/server";
 import {
   competencyRecommendations,
   contextErrorStatus,
+  findLiveTrainingRecommendations,
   isPeriod,
   isSessionToken,
   loadRecommendationContext,
-  makeTrainingRecommendations,
   saveRecommendations,
-  type TrainingRecommendation,
 } from "../../../../lib/growth-recommendations";
 
 export async function POST(request: Request) {
@@ -39,35 +38,31 @@ export async function POST(request: Request) {
       });
     }
 
-    const generated = makeTrainingRecommendations(context.weakest_dimension);
-    const cached = context.cached_training;
-    const cachedMatches =
-      Array.isArray(cached) &&
-      cached.length >= generated.length &&
-      generated.every(
-        (item, index) =>
-          cached[index]?.keyword === item.keyword &&
-          cached[index]?.searchUrl === item.searchUrl &&
-          cached[index]?.reason === item.reason,
+    // Training availability changes often. The helper keeps a short server cache,
+    // while each response is refreshed from the public TETI course list so that a
+    // saved, closed course is never presented as the current recommendation.
+    const recommendations = await findLiveTrainingRecommendations(
+      context.weakest_dimension,
+    );
+    if (recommendations.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "NO_LIVE_TETI_COURSES" },
+        { status: 503 },
       );
-    const recommendations: TrainingRecommendation[] = cachedMatches
-      ? cached.slice(0, 5)
-      : generated;
-
-    if (!cachedMatches) {
-      const saved = await saveRecommendations(
-        body.sessionToken,
-        context,
-        "training",
-        recommendations,
-      );
-      if (!saved.success) throw new Error(saved.error ?? "SAVE_FAILED");
     }
+
+    const saved = await saveRecommendations(
+      body.sessionToken,
+      context,
+      "training",
+      recommendations,
+    );
+    if (!saved.success) throw new Error(saved.error ?? "SAVE_FAILED");
 
     const config = competencyRecommendations[context.weakest_dimension];
     return NextResponse.json({
       success: true,
-      source: cachedMatches ? "history" : "short-keywords",
+      source: "teti-live-courses",
       weakestDimension: context.weakest_dimension,
       weakestLabel: config.label,
       weakestScore: context.weakest_score,

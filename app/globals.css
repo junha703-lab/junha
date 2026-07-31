@@ -1734,6 +1734,33 @@ footer {
   border: 1px solid #c9e4d8;
   border-radius: 27px;
   background: linear-gradient(135deg, #eef9f1, #f4fbf7);
+  position: relative;
+  overflow: hidden;
+}
+
+.weakest-summary {
+  overflow: hidden;
+}
+
+.growth-card-illustration {
+  width: 82px;
+  height: 74px;
+  position: absolute;
+  top: 13px;
+  right: 110px;
+  display: block;
+  background-image: url("/growth-card-illustrations.png");
+  background-repeat: no-repeat;
+  background-size: 200% auto;
+  pointer-events: none;
+}
+
+.growth-card-illustration-flight {
+  background-position: left center;
+}
+
+.growth-card-illustration-support {
+  background-position: right center;
 }
 
 .growth-highlight-head {
@@ -1883,7 +1910,7 @@ footer {
   background-image: url("/recommendation-section-scenes.png");
   background-repeat: no-repeat;
   background-size: 200% 100%;
-  opacity: 0.3;
+  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -1984,6 +2011,43 @@ footer {
 .primary-training-card h4 {
   margin-top: 18px;
   font-size: 30px;
+}
+
+.training-topic {
+  margin: 9px 0 0;
+  padding: 6px 9px;
+  border-radius: 10px;
+  background: #edf6f6;
+  color: #2f756f;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.training-facts {
+  width: 100%;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 5px;
+}
+
+.training-facts div {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 7px;
+  align-items: baseline;
+}
+
+.training-facts dt {
+  color: #6b8b95;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.training-facts dd {
+  margin: 0;
+  color: #587086;
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .card-index {
@@ -2850,6 +2914,13 @@ footer {
   .weakest-score,
   .growth-highlight-score {
     grid-row: auto;
+  }
+
+  .growth-card-illustration {
+    width: 66px;
+    height: 60px;
+    top: 13px;
+    right: 87px;
   }
 
   .recommendation-section {

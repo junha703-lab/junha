@@ -21,10 +21,16 @@ type GrowthHighlight = {
 };
 
 type TrainingRecommendation = {
+  title: string;
   keyword: string;
   provider: string;
   reason: string;
   searchUrl: string;
+  detailUrl: string;
+  status: string;
+  applicationPeriod?: string;
+  educationPeriod?: string;
+  target?: string;
 };
 
 type BookRecommendation = {
@@ -65,7 +71,7 @@ const periodLabels: Record<Period, string> = {
 };
 
 const TETI_SEARCH_URL =
-  "https://www.teti.kr/homepage/search/selectTotalSearchList.do";
+  "https://www.teti.kr/homepage/educourse/eduCourseList.do";
 
 function loadingState<T>(): SectionState<T> {
   return { status: "loading", items: [], error: "" };
@@ -254,10 +260,29 @@ function TrainingCard({
       <span className="verified-badge">
         {primary ? "가장 먼저 볼 추천" : "짧은 핵심 검색어"}
       </span>
-      <h4>{item.keyword}</h4>
-      <p className="card-provider">{item.provider}</p>
+      <h4>{item.title}</h4>
+      <p className="card-provider">
+        {item.provider} · <b>{item.status}</b>
+      </p>
+      <p className="training-topic">추천 주제어: {item.keyword}</p>
+      {(item.applicationPeriod || item.educationPeriod || item.target) && (
+        <dl className="training-facts">
+          {item.target && (
+            <div><dt>대상</dt><dd>{item.target}</dd></div>
+          )}
+          {item.applicationPeriod && (
+            <div><dt>신청</dt><dd>{item.applicationPeriod}</dd></div>
+          )}
+          {item.educationPeriod && (
+            <div><dt>교육</dt><dd>{item.educationPeriod}</dd></div>
+          )}
+        </dl>
+      )}
       <RecommendationReason reason={item.reason} />
       <div className="card-actions">
+        <a href={item.detailUrl} target="_blank" rel="noreferrer">
+          연수 상세보기 ↗
+        </a>
         <button type="button" onClick={onUseKeyword}>
           연수 통합검색창에 넣기
         </button>
@@ -496,6 +521,10 @@ export default function GrowthRecommendations({
       ) : summary ? (
         <div className="recommendation-insight-grid">
           <div className="growth-highlight-summary">
+            <span
+              className="growth-card-illustration growth-card-illustration-flight"
+              aria-hidden="true"
+            />
             <div className="growth-highlight-head">
               <span>
                 {growthHighlight.isBaseline
@@ -523,6 +552,10 @@ export default function GrowthRecommendations({
             <p>{growthHighlight.message}</p>
           </div>
           <div className="weakest-summary">
+            <span
+              className="growth-card-illustration growth-card-illustration-support"
+              aria-hidden="true"
+            />
             <div>
               <span>가장 보완이 필요한 역량</span>
               <strong>{summary.weakestLabel}</strong>
@@ -546,7 +579,7 @@ export default function GrowthRecommendations({
             <div className="recommendation-section-title">
               <span className="recommendation-number">01</span>
               <div>
-                <h3>가장 먼저 살펴볼 연수 주제</h3>
+                <h3>가장 먼저 살펴볼 실제 연수 과정</h3>
                 <p>
                   대표 추천 1개에 집중하고, 추가 추천 4개는 필요할 때
                   펼쳐보세요.
@@ -590,7 +623,7 @@ export default function GrowthRecommendations({
                         {additionalTraining.map(({ item, index }) => (
                           <TrainingCard
                             item={item}
-                            key={item.keyword}
+                            key={`${item.title}:${item.keyword}`}
                             copied={copiedKeyword === item.keyword}
                             onCopy={() => void copyKeyword(item.keyword)}
                             onUseKeyword={() =>
