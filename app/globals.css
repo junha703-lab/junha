@@ -1743,15 +1743,17 @@ footer {
 }
 
 .growth-card-illustration {
-  width: 82px;
-  height: 74px;
+  width: 123px;
+  height: 111px;
   position: absolute;
-  top: 13px;
-  right: 145px;
+  top: 7px;
+  right: 180px;
   display: block;
   background-image: url("/growth-card-illustrations.png");
   background-repeat: no-repeat;
   background-size: 200% auto;
+  filter: saturate(1.45) contrast(1.14)
+    drop-shadow(0 3px 3px rgba(41, 93, 126, 0.22));
   pointer-events: none;
 }
 
@@ -2917,10 +2919,10 @@ footer {
   }
 
   .growth-card-illustration {
-    width: 66px;
-    height: 60px;
-    top: 13px;
-    right: 112px;
+    width: 99px;
+    height: 90px;
+    top: 8px;
+    right: 135px;
   }
 
   .recommendation-section {
