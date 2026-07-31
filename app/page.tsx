@@ -19,6 +19,14 @@ type ComparisonLayer = {
   skills: RadarSkill[];
   className: string;
 };
+type GrowthHighlight = {
+  label: string;
+  score: number;
+  delta: number;
+  previousLabel: string;
+  isBaseline: boolean;
+  message: string;
+};
 type AnswersByPeriod = Record<Period, Record<string, number>>;
 type StoredRecord = {
   answers?: Record<string, number>;
@@ -149,6 +157,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
+const APP_VERSION = "1.8.1";
 const periods: Period[] = ["april", "october", "january"];
 const periodLabels: Record<Period, string> = {
   april: "4월",
@@ -161,6 +170,22 @@ const careSteps = [
   { letter: "R", label: "역량 실현", className: "care-r" },
   { letter: "E", label: "성장 및 환류", className: "care-e" },
 ];
+const growthMessages: Record<string, string> = {
+  learning:
+    "학생 수준에 맞춘 수업 설계와 피드백이 더 촘촘해져, 아이들이 수업에 자신 있게 참여하고 배움의 성취를 스스로 확인하게 될 것입니다.",
+  guidance:
+    "학생을 세심하게 이해하고 관계를 지원하는 힘이 자라, 아이들이 더 안전하고 편안한 학급 안에서 서로를 존중하게 될 것입니다.",
+  professional:
+    "배운 내용을 수업과 생활지도에 연결하는 전문성이 높아져, 새로운 교육 변화가 아이들의 실제 배움으로 이어질 것입니다.",
+  smart:
+    "학생에게 알맞은 에듀테크와 AI 활용이 확장되어, 아이들이 더 다양한 방식으로 탐구하고 자신의 생각을 표현하게 될 것입니다.",
+  culture:
+    "예술·문화·진로 활동을 설계하는 힘이 커져, 아이들이 자신의 적성과 강점을 발견하고 창의적으로 표현할 기회가 늘어날 것입니다.",
+  empathy:
+    "공감하며 듣고 대화를 촉진하는 역량이 성장해, 아이들이 서로의 생각을 존중하고 어려움을 편안하게 나눌 수 있게 될 것입니다.",
+  whole:
+    "놀이·체육·인성 활동을 통한 전인적 성장 지원이 강화되어, 아이들이 건강한 가치관과 협력하는 태도를 함께 기르게 될 것입니다.",
+};
 
 function blankAnswers() {
   return Object.fromEntries(
@@ -470,9 +495,8 @@ function AdminDashboard({
   return (
     <main className="admin-page">
       <header className="topbar admin-topbar">
-        <div className="brand-mark">Y</div>
         <div className="brand platform-topbar-title">
-          교원역량지원 통합플랫폼
+          교원역량개발지원 통합플랫폼
         </div>
         <div className="brand-sub">대전양지초 · 관리자 화면</div>
         <div className="top-actions">
@@ -714,6 +738,44 @@ export default function Home() {
     () => comparisonLayersFor(activePeriod, answersByPeriod),
     [activePeriod, answersByPeriod.april, answersByPeriod.october],
   );
+  const growthHighlight = useMemo<GrowthHighlight>(() => {
+    const currentSkills = makeSkills(answersByPeriod[activePeriod]);
+    const previousPeriod: Period | null =
+      activePeriod === "october"
+        ? "april"
+        : activePeriod === "january"
+          ? "october"
+          : null;
+    const previousSkills = previousPeriod
+      ? makeSkills(answersByPeriod[previousPeriod])
+      : null;
+    const selected = currentSkills
+      .map((skill, index) => ({
+        skill,
+        delta: previousSkills
+          ? skill.value - previousSkills[index].value
+          : skill.value,
+      }))
+      .sort(
+        (left, right) =>
+          right.delta - left.delta ||
+          right.skill.value - left.skill.value,
+      )[0];
+
+    return {
+      label: selected.skill.label,
+      score: selected.skill.value,
+      delta: previousSkills ? selected.delta : 0,
+      previousLabel: previousPeriod ? periodLabels[previousPeriod] : "",
+      isBaseline: !previousSkills,
+      message: growthMessages[selected.skill.id],
+    };
+  }, [
+    activePeriod,
+    answersByPeriod.april,
+    answersByPeriod.october,
+    answersByPeriod.january,
+  ]);
   const responded = Object.values(answers).filter(Boolean).length;
   const total = Object.keys(answers).length;
 
@@ -965,7 +1027,7 @@ export default function Home() {
             이후 같은 이름과 비밀번호로 어느 기기에서나 기록을 불러옵니다.
           </small>
           <div className="auth-version-meta" aria-label="앱 정보">
-            <span>v.1.8.0</span>
+            <span>v.{APP_VERSION}</span>
             <span>앱개발자: 도준하</span>
           </div>
           </section>
@@ -1007,9 +1069,8 @@ export default function Home() {
   return (
     <main>
       <header className="topbar">
-        <div className="brand-mark">Y</div>
         <div className="brand platform-topbar-title">
-          교원역량지원 통합플랫폼
+          교원역량개발지원 통합플랫폼
         </div>
         <div className="brand-sub">대전양지초 · 맞춤형 CARE 교원 성장 기록</div>
         <div className="top-actions">
@@ -1027,18 +1088,23 @@ export default function Home() {
       </header>
       <section className="hero">
         <div>
-          <div className="eyebrow">
-            YANGJI CARE GROWTH MAP <span>●</span>
-          </div>
           <h1>
             나의 강점을 발견하고,
             <br />
             <em>다음 성장을 설계하다</em>
           </h1>
-          <p>
-            5점 척도의 문항으로 역량을 돌아보면
+          <p className="hero-diagnosis-copy">
+            <span className="dotted-word" aria-label="다면평가">
+              {["다", "면", "평", "가"].map((letter) => (
+                <b key={letter}>
+                  <i aria-hidden="true" />
+                  {letter}
+                </b>
+              ))}
+            </span>{" "}
+            기반의 자기역량진단으로
             <br />
-            4월부터 1월까지의 성장 변화가 7각형 지도에 이어집니다.
+            4월부터 1월까지의 성장 변화가 칠각형 지도로 나타납니다.
           </p>
         </div>
         <div className="hero-side">
@@ -1288,6 +1354,7 @@ export default function Home() {
         period={activePeriod}
         complete={responded === total}
         refreshKey={recommendationRefreshKey}
+        growthHighlight={growthHighlight}
       />
       <footer>
         <span>대전양지초등학교 · 맞춤형 CARE 지원 모델</span>

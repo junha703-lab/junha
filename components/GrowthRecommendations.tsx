@@ -11,6 +11,15 @@ type RecommendationSummary = {
   diagnosis: string;
 };
 
+type GrowthHighlight = {
+  label: string;
+  score: number;
+  delta: number;
+  previousLabel: string;
+  isBaseline: boolean;
+  message: string;
+};
+
 type TrainingRecommendation = {
   keyword: string;
   provider: string;
@@ -292,11 +301,13 @@ export default function GrowthRecommendations({
   period,
   complete,
   refreshKey,
+  growthHighlight,
 }: {
   sessionToken: string;
   period: Period;
   complete: boolean;
   refreshKey: number;
+  growthHighlight: GrowthHighlight;
 }) {
   const [summary, setSummary] = useState<RecommendationSummary | null>(null);
   const [training, setTraining] =
@@ -462,12 +473,12 @@ export default function GrowthRecommendations({
     >
       <div className="recommendation-heading">
         <div className="section-kicker">
-          03 <span>CARE NEXT · 맞춤형 성장 설계</span>
+          03 <span>맞춤형 성장 설계</span>
         </div>
         <h2 id="growth-title">나의 다음 성장을 위한 추천</h2>
         <p>
-          저장된 {periodLabels[period]} 진단 결과에서 가장 보완이 필요한
-          역량을 찾아 연수 탐색어와 실제 도서를 연결합니다.
+          저장된 {periodLabels[period]} 진단 결과에서 성장한 역량을 확인하고,
+          다음에 보완할 역량에 맞춰 연수와 도서를 연결합니다.
         </p>
       </div>
 
@@ -477,16 +488,45 @@ export default function GrowthRecommendations({
           <span>평가를 저장하면 현재 역량에 맞는 성장 자료가 나타납니다.</span>
         </div>
       ) : summary ? (
-        <div className="weakest-summary">
-          <div>
-            <span>가장 보완이 필요한 역량</span>
-            <strong>{summary.weakestLabel}</strong>
+        <div className="recommendation-insight-grid">
+          <div className="growth-highlight-summary">
+            <div className="growth-highlight-head">
+              <span>
+                {growthHighlight.isBaseline
+                  ? "현재 돋보이는 역량"
+                  : `${growthHighlight.previousLabel}보다 변화가 가장 긍정적인 역량`}
+              </span>
+              <strong>{growthHighlight.label}</strong>
+            </div>
+            <div className="growth-highlight-score">
+              {growthHighlight.isBaseline ? (
+                <>
+                  <b>{growthHighlight.score.toFixed(2)}</b>
+                  <span>/ 5점</span>
+                </>
+              ) : (
+                <>
+                  <b>
+                    {growthHighlight.delta >= 0 ? "+" : ""}
+                    {growthHighlight.delta.toFixed(2)}
+                  </b>
+                  <span>점 변화</span>
+                </>
+              )}
+            </div>
+            <p>{growthHighlight.message}</p>
           </div>
-          <div className="weakest-score">
-            <b>{summary.weakestScore.toFixed(2)}</b>
-            <span>/ 5점</span>
+          <div className="weakest-summary">
+            <div>
+              <span>가장 보완이 필요한 역량</span>
+              <strong>{summary.weakestLabel}</strong>
+            </div>
+            <div className="weakest-score">
+              <b>{summary.weakestScore.toFixed(2)}</b>
+              <span>/ 5점</span>
+            </div>
+            <p>{summary.diagnosis}</p>
           </div>
-          <p>{summary.diagnosis}</p>
         </div>
       ) : (
         <div className="recommendation-summary-loading">
