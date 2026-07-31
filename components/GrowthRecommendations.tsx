@@ -106,8 +106,14 @@ function RecommendationReason({ reason }: { reason: string }) {
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        왜 추천했나요?
-        <span className="reason-chevron" aria-hidden="true">⌄</span>
+        <span className="reason-button-copy">
+          <span className="reason-icon" aria-hidden="true">i</span>
+          <span>
+            <b>왜 추천했나요?</b>
+            <small>추천 근거 보기</small>
+          </span>
+        </span>
+        <span className="reason-chevron" aria-hidden="true">+</span>
       </button>
       {open && (
         <div className="recommendation-reason-answer">

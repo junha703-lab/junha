@@ -499,8 +499,13 @@ button {
 .growth-recommendations.stage-three
   .recommendation-heading
   .section-kicker {
-  font-size: 14px;
-  letter-spacing: 1.4px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: clamp(24px, 2.2vw, 29px);
+  letter-spacing: -1.25px;
+  font-weight: 900;
+  line-height: 1.15;
 }
 
 .input-panel.stage-one .section-kicker span,
@@ -509,10 +514,10 @@ button {
   .recommendation-heading
   .section-kicker
   span {
-  margin-left: 8px;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: -0.15px;
+  margin-left: 0;
+  font-size: 1em;
+  font-weight: 900;
+  letter-spacing: -1.25px;
 }
 
 .input-panel h2,
@@ -1698,6 +1703,7 @@ footer {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px 22px;
+  align-items: end;
   position: relative;
   z-index: 1;
   border: 1px solid #cfe3eb;
@@ -1724,6 +1730,7 @@ footer {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px 22px;
+  align-items: end;
   border: 1px solid #c9e4d8;
   border-radius: 27px;
   background: linear-gradient(135deg, #eef9f1, #f4fbf7);
@@ -1751,6 +1758,7 @@ footer {
   align-items: baseline;
   gap: 4px;
   color: #268568;
+  align-self: end;
 }
 
 .growth-highlight-score b {
@@ -1786,6 +1794,7 @@ footer {
   align-items: baseline;
   gap: 4px;
   color: var(--blue);
+  align-self: end;
 }
 
 .weakest-score b {
@@ -1874,7 +1883,7 @@ footer {
   background-image: url("/recommendation-section-scenes.png");
   background-repeat: no-repeat;
   background-size: 200% 100%;
-  opacity: 0.07;
+  opacity: 0.16;
   pointer-events: none;
 }
 
@@ -2030,37 +2039,85 @@ footer {
 
 .recommendation-reason > button {
   width: 100%;
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 56px;
+  padding: 8px 10px 8px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border: 1px solid #d8e3ec;
-  border-radius: 13px;
-  background: #f8fafc;
-  color: #3f5e78;
-  font-size: 12px;
+  border: 1px solid #b9d3de;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f2f9fb, #ffffff);
+  box-shadow: 0 6px 15px rgba(49, 103, 127, 0.08);
+  color: #315f77;
   font-weight: 800;
   cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
-.recommendation-reason .reason-chevron {
-  width: 25px;
-  height: 25px;
+.recommendation-reason > button:hover,
+.recommendation-reason > button:focus-visible {
+  border-color: #5b9bb3;
+  box-shadow: 0 9px 20px rgba(49, 103, 127, 0.15);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.reason-button-copy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.reason-button-copy > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.reason-button-copy b {
+  color: #2e6077;
+  font-size: 13px;
+}
+
+.reason-button-copy small {
+  color: #6f8491;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.reason-icon {
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   flex: none;
   border-radius: 50%;
-  background: #e5f0f4;
-  color: #46798f;
+  background: #347e9b;
+  color: #fff;
+  font-family: Georgia, serif;
   font-size: 17px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.recommendation-reason .reason-chevron {
+  width: 33px;
+  height: 33px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  background: #347e9b;
+  color: #fff;
+  font-size: 23px;
+  font-weight: 400;
   line-height: 1;
   transition: transform 160ms ease;
 }
 
 .recommendation-reason > button[aria-expanded="true"] .reason-chevron {
-  transform: rotate(180deg);
+  transform: rotate(45deg);
 }
 
 .recommendation-reason-answer {
@@ -2787,12 +2844,12 @@ footer {
   .weakest-summary,
   .growth-highlight-summary {
     padding: 21px 19px;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .weakest-score,
   .growth-highlight-score {
-    grid-row: 2;
+    grid-row: auto;
   }
 
   .recommendation-section {
