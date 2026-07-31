@@ -1747,7 +1747,7 @@ footer {
   height: 74px;
   position: absolute;
   top: 13px;
-  right: 110px;
+  right: 145px;
   display: block;
   background-image: url("/growth-card-illustrations.png");
   background-repeat: no-repeat;
@@ -1800,7 +1800,7 @@ footer {
   line-height: 1.7;
 }
 
-.weakest-summary > div:first-child {
+.weakest-summary-copy {
   display: grid;
   gap: 4px;
 }
@@ -2920,7 +2920,7 @@ footer {
     width: 66px;
     height: 60px;
     top: 13px;
-    right: 87px;
+    right: 112px;
   }
 
   .recommendation-section {

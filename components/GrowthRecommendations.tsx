@@ -241,16 +241,12 @@ function BookCards({ items }: { items: BookRecommendation[] }) {
 function TrainingCard({
   item,
   primary = false,
-  copied,
-  onCopy,
   onUseKeyword,
   onChoose,
   onOther,
 }: {
   item: TrainingRecommendation;
   primary?: boolean;
-  copied: boolean;
-  onCopy: () => void;
   onUseKeyword: () => void;
   onChoose?: () => void;
   onOther?: () => void;
@@ -285,9 +281,6 @@ function TrainingCard({
         </a>
         <button type="button" onClick={onUseKeyword}>
           연수 통합검색창에 넣기
-        </button>
-        <button type="button" onClick={onCopy}>
-          {copied ? "복사됨 ✓" : "검색어 복사"}
         </button>
       </div>
       {(onChoose || onOther) && (
@@ -347,7 +340,6 @@ export default function GrowthRecommendations({
     );
   const [books, setBooks] =
     useState<SectionState<BookRecommendation>>(loadingState<BookRecommendation>);
-  const [copiedKeyword, setCopiedKeyword] = useState("");
   const [trainingQuery, setTrainingQuery] = useState("");
   const [bookQuery, setBookQuery] = useState("");
   const [bookSuggestions, setBookSuggestions] = useState<string[]>([]);
@@ -367,7 +359,6 @@ export default function GrowthRecommendations({
       setSummary(null);
       setTraining(loadingState<TrainingRecommendation>());
       setBooks(loadingState<BookRecommendation>());
-      setCopiedKeyword("");
       setTrainingQuery("");
       setBookQuery("");
       setBookSuggestions([]);
@@ -417,16 +408,6 @@ export default function GrowthRecommendations({
 
     return () => controller.abort();
   }, [sessionToken, period, complete, refreshKey]);
-
-  async function copyKeyword(keyword: string) {
-    try {
-      await navigator.clipboard.writeText(keyword);
-      setCopiedKeyword(keyword);
-      window.setTimeout(() => setCopiedKeyword(""), 1800);
-    } catch {
-      setCopiedKeyword("");
-    }
-  }
 
   async function searchBooks(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -556,7 +537,7 @@ export default function GrowthRecommendations({
               className="growth-card-illustration growth-card-illustration-support"
               aria-hidden="true"
             />
-            <div>
+            <div className="weakest-summary-copy">
               <span>가장 보완이 필요한 역량</span>
               <strong>{summary.weakestLabel}</strong>
             </div>
@@ -598,8 +579,6 @@ export default function GrowthRecommendations({
                   <TrainingCard
                     item={focusedTraining}
                     primary
-                    copied={copiedKeyword === focusedTraining.keyword}
-                    onCopy={() => void copyKeyword(focusedTraining.keyword)}
                     onUseKeyword={() =>
                       useTrainingKeyword(focusedTraining.keyword)
                     }
@@ -624,8 +603,6 @@ export default function GrowthRecommendations({
                           <TrainingCard
                             item={item}
                             key={`${item.title}:${item.keyword}`}
-                            copied={copiedKeyword === item.keyword}
-                            onCopy={() => void copyKeyword(item.keyword)}
                             onUseKeyword={() =>
                               useTrainingKeyword(item.keyword)
                             }
@@ -653,6 +630,16 @@ export default function GrowthRecommendations({
                     method="get"
                     target="_blank"
                   >
+                    <input type="hidden" name="searchCondition" value="def" />
+                    <input type="hidden" name="srchEduTrgtClId" value="01" />
+                    <input type="hidden" name="srchStatusOrdg" value="1" />
+                    <input
+                      type="hidden"
+                      name="srchYear"
+                      value={String(new Date().getFullYear())}
+                    />
+                    <input type="hidden" name="srchMonth" value="0" />
+                    <input type="hidden" name="pageIndex" value="1" />
                     <label className="sr-only" htmlFor="training-search-keyword">
                       연수 검색어
                     </label>
@@ -661,7 +648,7 @@ export default function GrowthRecommendations({
                     </span>
                     <input
                       id="training-search-keyword"
-                      name="searchKeyword"
+                      name="srchCrseNm"
                       value={trainingQuery}
                       onChange={(event) => setTrainingQuery(event.target.value)}
                       maxLength={20}
