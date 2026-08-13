@@ -174,7 +174,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.9.1";
+const APP_VERSION = "1.9.2";
 const periods: Period[] = ["april", "october", "january"];
 const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
 const growthTermLabels: Record<GrowthTerm, string> = {
@@ -534,6 +534,17 @@ function GrowthJournalPanel({
   onAnswerChange: (questionId: string, value: string) => void;
   onSave: () => Promise<void>;
 }) {
+  const summaryItems = [
+    { key: "learning", label: "배운 것" },
+    { key: "practice", label: "새롭게 시도한 것" },
+    { key: "change", label: "학생의 변화" },
+    { key: "next", label: "이어가고 싶은 역량" },
+  ] as const;
+  const savedTerms = growthTerms.filter((growthTerm) => {
+    const savedAnswers = records[growthTerm]?.answers;
+    return savedAnswers && summaryItems.some(({ key }) => String(savedAnswers[key] ?? "").trim());
+  });
+
   return (
     <section className="growth-journal-panel" id="growth-journal">
       <div className="section-kicker">CARE <span>교사 성장기록</span></div>
@@ -565,616 +576,38 @@ function GrowthJournalPanel({
           ? "4월부터 8월까지의 배움과 실천을 돌아봅니다."
           : "10월부터 1월까지의 변화와 다음 실천을 기록합니다."}
       </p>
-      <div className="journal-question-list">
-        {growthJournalQuestions.map((question, index) => (
-          <label className="journal-question" key={question.id}>
-            <span>{index + 1}</span>
-            <strong>
-              {question.id === "next"
-                ? term === "first_half"
-                  ? "2월까지 더 키우고 싶은 역량은 무엇인가요?"
-                  : "앞으로도 계속 이어가고 싶은 역량은 무엇인가요?"
-                : question.label}
-            </strong>
-            <textarea
-              value={answers[question.id] ?? ""}
-              onChange={(event) => onAnswerChange(question.id, event.target.value)}
-              rows={4}
-              placeholder="편하게 적어 주세요."
-            />
-          </label>
-        ))}
-      </div>
-      <div className="journal-actions">
-        <button className="sheet-button" type="button" onClick={() => void onSave()} disabled={state === "saving"}>
-          {state === "saving" ? "성장기록 저장 중…" : "성장기록 저장하기 ↗"}
-        </button>
-        {state === "saved" && <p className="save-message success">성장기록이 저장되었습니다. 다른 기기에서도 확인할 수 있습니다.</p>}
-        {state === "error" && <p className="save-message error">내용을 한 문항 이상 작성한 뒤 다시 저장해 주세요.</p>}
-      </div>
-    </section>
-  );
-}
-
-function AdminDashboard({
-  accounts,
-  state,
-  deletingAccountId,
-  onRefresh,
-  onDelete,
-  onLogout,
-}: {
-  accounts: AdminAccount[];
-  state: "loading" | "ready" | "error";
-  deletingAccountId: string;
-  onRefresh: () => void;
-  onDelete: (accountId: string) => Promise<void>;
-  onLogout: () => void;
-}) {
-  return (
-    <main className="admin-page">
-      <header className="topbar admin-topbar">
-        <div className="brand platform-topbar-title">
-          교원역량개발지원 통합플랫폼
-        </div>
-        <div className="brand-sub">대전양지초 · 관리자 화면</div>
-        <div className="top-actions">
-          <button
-            className="ghost-button"
-            onClick={onRefresh}
-            disabled={state === "loading"}
-          >
-            {state === "loading" ? "불러오는 중…" : "새로고침 ↻"}
-          </button>
-          <button className="profile-button" onClick={onLogout}>
-            양지초 · 로그아웃
-          </button>
-        </div>
-      </header>
-
-      <section className="admin-hero">
-        <div>
-          <p className="eyebrow">YANGJI CARE ADMIN</p>
-          <h1>
-            전체 교원의 <em>성장 흐름</em>을
-            <br />
-            한눈에 살펴보세요
-          </h1>
-          <p>
-            4월·10월·1월 역량지도를 계정별로 확인하고, 필요한 지도를
-            PNG 이미지로 저장할 수 있습니다.
-          </p>
-        </div>
-        <div className="admin-summary">
-          <strong>{accounts.length}</strong>
-          <span>등록 교원 계정</span>
-        </div>
-      </section>
-
-      <section className="admin-content">
-        <div className="admin-guide">
+      <div className="growth-summary" aria-labelledby="growth-summary-heading">
+        <div className="growth-summary-heading">
           <div>
-            <strong>지도 읽는 방법</strong>
-            <span>현재 월은 진하게, 이전 평가는 점선 배경으로 표시됩니다.</span>
+            <span className="section-kicker">MY CARE FLOW</span>
+            <h3 id="growth-summary-heading">나의 성장 돌아보기</h3>
           </div>
+          <p>저장한 기록을 기간별로 한눈에 정리해 보세요.</p>
         </div>
-
-        {state === "error" && (
-          <div className="admin-empty error">
-            계정 목록을 불러오지 못했습니다. 잠시 후 새로고침해 주세요.
-          </div>
-        )}
-        {state === "loading" && accounts.length === 0 && (
-          <div className="admin-empty">교원별 역량지도를 불러오고 있습니다…</div>
-        )}
-        {state === "ready" && accounts.length === 0 && (
-          <div className="admin-empty">등록된 교원 계정이 없습니다.</div>
-        )}
-
-        <div className="admin-list">
-          {accounts.map((account, accountIndex) => {
-            const accountAnswers = answersFromRecords(account.records);
-            return (
-              <article className="admin-teacher-card" key={account.account_id}>
-                <div className="admin-teacher-head">
-                  <div className="admin-teacher-name">
-                    <span>{String(accountIndex + 1).padStart(2, "0")}</span>
-                    <div>
-                      <h2>{account.teacher_name}</h2>
-                      <p>4월·10월·1월 성장 기록</p>
-                    </div>
+        {savedTerms.length ? (
+          <div className="growth-summary-grid">
+            {savedTerms.map((growthTerm) => {
+              const savedAnswers = records[growthTerm]?.answers ?? {};
+              return (
+                <article className="growth-summary-card" key={growthTerm}>
+                  <h4>{growthTermLabels[growthTerm]}</h4>
+                  <div className="growth-summary-items">
+                    {summaryItems.map(({ key, label }) => {
+                      const value = String(savedAnswers[key] ?? "").trim();
+                      return value ? (
+                        <div className="growth-summary-item" key={key}>
+                          <strong>{label}</strong>
+                          <p>{value}</p>
+                        </div>
+                      ) : null;
+                    })}
                   </div>
-                  <button
-                    className="admin-delete-button"
-                    disabled={deletingAccountId === account.account_id}
-                    onClick={() => {
-                      const confirmed = window.confirm(
-                        `${account.teacher_name} 계정과 모든 평가 기록을 삭제할까요?\n삭제한 정보는 복구할 수 없습니다.`,
-                      );
-                      if (confirmed) void onDelete(account.account_id);
-                    }}
-                  >
-                    {deletingAccountId === account.account_id
-                      ? "삭제 중…"
-                      : "계정 삭제"}
-                  </button>
-                </div>
-
-                <div className="admin-period-grid">
-                  {periods.map((period) => {
-                    const periodSkills = makeSkills(accountAnswers[period]);
-                    const comparisons = comparisonLayersFor(
-                      period,
-                      accountAnswers,
-                    );
-                    const record = account.records?.[period];
-                    return (
-                      <section className="admin-period-card" key={period}>
-                        <div className="admin-period-head">
-                          <div>
-                            <h3>{periodLabels[period]} 역량지도</h3>
-                            <span
-                              className={record ? "submitted" : "not-submitted"}
-                            >
-                              {record ? "평가 저장됨" : "미제출"}
-                            </span>
-                          </div>
-                          <button
-                            className="admin-png-button"
-                            onClick={() =>
-                              downloadRadarPng(
-                                periodSkills,
-                                period,
-                                comparisons,
-                                account.teacher_name,
-                              )
-                            }
-                          >
-                            PNG ↓
-                          </button>
-                        </div>
-                        <div className="admin-radar">
-                          <Radar
-                            skills={periodSkills}
-                            comparisons={comparisons}
-                          />
-                        </div>
-                        {comparisons.length > 0 && (
-                          <div className="admin-comparison-caption">
-                            {comparisons.map((comparison) => (
-                              <span key={comparison.period}>
-                                <i
-                                  className={`compare-chip ${comparison.className}`}
-                                />
-                                {comparison.label}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </section>
-                    );
-                  })}
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-      <div className="developer-credit">앱개발자: 도준하</div>
-    </main>
-  );
-}
-
-export default function Home() {
-  const [authReady, setAuthReady] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminAccounts, setAdminAccounts] = useState<AdminAccount[]>([]);
-  const [adminState, setAdminState] = useState<
-    "loading" | "ready" | "error"
-  >("loading");
-  const [deletingAccountId, setDeletingAccountId] = useState("");
-  const [teacherName, setTeacherName] = useState("");
-  const [pin, setPin] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [loginState, setLoginState] = useState<"idle" | "loading">("idle");
-  const [sessionToken, setSessionToken] = useState("");
-  const [saveState, setSaveState] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
-  const [recommendationRefreshKey, setRecommendationRefreshKey] = useState(0);
-  const [activeWorkspace, setActiveWorkspace] = useState<"assessment" | "journal">("assessment");
-  const [growthJournalRecords, setGrowthJournalRecords] = useState<
-    Partial<Record<GrowthTerm, GrowthJournalRecord>>
-  >({});
-  const [growthJournalAnswers, setGrowthJournalAnswers] = useState<
-    Record<GrowthTerm, GrowthJournalAnswers>
-  >({ first_half: {}, second_half: {} });
-  const [growthJournalTerm, setGrowthJournalTerm] = useState<GrowthTerm>("first_half");
-  const [growthJournalState, setGrowthJournalState] = useState<
-    "idle" | "loading" | "saving" | "saved" | "error"
-  >("idle");
-  const [journalPromptTerm, setJournalPromptTerm] = useState<GrowthTerm | null>(null);
-  const [journalSuccessTerm, setJournalSuccessTerm] = useState<GrowthTerm | null>(null);
-  const [activePeriod, setActivePeriod] = useState<Period>("april");
-  const [openDimension, setOpenDimension] = useState("learning");
-  const [answersByPeriod, setAnswersByPeriod] =
-    useState<AnswersByPeriod>(blankPeriods);
-
-  function applyGrowthJournalRecords(
-    records?: Partial<Record<GrowthTerm, GrowthJournalRecord>>,
-  ) {
-    const nextAnswers: Record<GrowthTerm, GrowthJournalAnswers> = {
-      first_half: {},
-      second_half: {},
-    };
-    growthTerms.forEach((term) => {
-      const answers = records?.[term]?.answers;
-      if (answers && typeof answers === "object") {
-        nextAnswers[term] = { ...answers };
-      }
-    });
-    setGrowthJournalRecords(records ?? {});
-    setGrowthJournalAnswers(nextAnswers);
-  }
-
-  async function loadGrowthJournals(token: string) {
-    const loaded = await callSupabaseRpc<GrowthJournalLoadResponse>(
-      "growth_journal_load",
-      { p_token: token },
-    );
-    if (!loaded.success) {
-      if (loaded.error === "SESSION_EXPIRED") clearSession();
-      throw new Error(loaded.error ?? "Unable to load growth journals.");
-    }
-    applyGrowthJournalRecords(loaded.records);
-    return loaded.records ?? {};
-  }
-
-  function hasGrowthJournal(term: GrowthTerm) {
-    const answers = growthJournalRecords[term]?.answers;
-    return Boolean(
-      answers &&
-        growthJournalQuestions.some(({ id }) => String(answers[id] ?? "").trim()),
-    );
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-    const savedToken = localStorage.getItem(SESSION_KEY);
-
-    async function restoreSession() {
-      if (!savedToken) {
-        if (!cancelled) setAuthReady(true);
-        return;
-      }
-
-      try {
-        const loaded = await callSupabaseRpc<LoadResponse>("teacher_load", {
-          p_token: savedToken,
-        });
-        if (!loaded.success || !loaded.teacher_name) {
-          localStorage.removeItem(SESSION_KEY);
-          return;
-        }
-        if (!cancelled) {
-          setSessionToken(savedToken);
-          setTeacherName(loaded.teacher_name);
-          setIsAdmin(Boolean(loaded.is_admin));
-          setAnswersByPeriod(answersFromRecords(loaded.records));
-          setAuthenticated(true);
-          if (loaded.is_admin) {
-            await fetchAdminAccounts(savedToken);
-          } else {
-            const journals = await loadGrowthJournals(savedToken);
-            if (!journals.first_half) setJournalPromptTerm("first_half");
-          }
-        }
-      } catch {
-        localStorage.removeItem(SESSION_KEY);
-      } finally {
-        if (!cancelled) setAuthReady(true);
-      }
-    }
-
-    void restoreSession();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  async function fetchAdminAccounts(token = sessionToken) {
-    if (!token) {
-      setAdminState("error");
-      return;
-    }
-    setAdminState("loading");
-    try {
-      const result = await callSupabaseRpc<AdminListResponse>(
-        "admin_list_accounts",
-        { p_token: token },
-      );
-      if (!result.success) {
-        if (result.error === "NOT_AUTHORIZED") clearSession();
-        throw new Error(result.error ?? "Unable to load admin dashboard.");
-      }
-      setAdminAccounts(result.accounts ?? []);
-      setAdminState("ready");
-    } catch {
-      setAdminState("error");
-    }
-  }
-
-  const answers = answersByPeriod[activePeriod];
-  const skills = useMemo(() => makeSkills(answers), [answers]);
-  const comparisonLayers = useMemo<ComparisonLayer[]>(
-    () => comparisonLayersFor(activePeriod, answersByPeriod),
-    [activePeriod, answersByPeriod.april, answersByPeriod.october],
-  );
-  const growthHighlight = useMemo<GrowthHighlight>(() => {
-    const currentSkills = makeSkills(answersByPeriod[activePeriod]);
-    const previousPeriod: Period | null =
-      activePeriod === "october"
-        ? "april"
-        : activePeriod === "january"
-          ? "october"
-          : null;
-    const previousSkills = previousPeriod
-      ? makeSkills(answersByPeriod[previousPeriod])
-      : null;
-    const selected = currentSkills
-      .map((skill, index) => ({
-        skill,
-        delta: previousSkills
-          ? skill.value - previousSkills[index].value
-          : skill.value,
-      }))
-      .sort(
-        (left, right) =>
-          right.delta - left.delta ||
-          right.skill.value - left.skill.value,
-      )[0];
-
-    return {
-      label: selected.skill.label,
-      score: selected.skill.value,
-      delta: previousSkills ? selected.delta : 0,
-      previousLabel: previousPeriod ? periodLabels[previousPeriod] : "",
-      isBaseline: !previousSkills,
-      message: growthMessages[selected.skill.id],
-    };
-  }, [
-    activePeriod,
-    answersByPeriod.april,
-    answersByPeriod.october,
-    answersByPeriod.january,
-  ]);
-  const responded = Object.values(answers).filter(Boolean).length;
-  const total = Object.keys(answers).length;
-
-  async function enter(event: React.FormEvent) {
-    event.preventDefault();
-    const name = teacherName.trim();
-    if (!name) {
-      setLoginError("이름을 입력해 주세요.");
-      return;
-    }
-    if (!/^\d{3}$/.test(pin)) {
-      setLoginError("비밀번호는 숫자 3자리로 입력해 주세요.");
-      return;
-    }
-
-    setLoginState("loading");
-    setLoginError("");
-    try {
-      const login = await callSupabaseRpc<LoginResponse>("teacher_login", {
-        p_name: name,
-        p_pin: pin,
-      });
-
-      if (!login.success || !login.session_token) {
-        if (login.error === "LOGIN_LOCKED") {
-          setLoginError(
-            "입력 오류가 여러 번 발생했습니다. 15분 후 다시 시도해 주세요.",
-          );
-        } else if (login.error === "INVALID_CREDENTIALS") {
-          setLoginError("이름 또는 비밀번호가 올바르지 않습니다.");
-        } else {
-          setLoginError("이름과 숫자 3자리 비밀번호를 확인해 주세요.");
-        }
-        return;
-      }
-
-      const loaded = await callSupabaseRpc<LoadResponse>("teacher_load", {
-        p_token: login.session_token,
-      });
-      if (!loaded.success) throw new Error("Unable to load account records.");
-
-      localStorage.setItem(SESSION_KEY, login.session_token);
-      setSessionToken(login.session_token);
-      setTeacherName(loaded.teacher_name ?? name);
-      setIsAdmin(Boolean(loaded.is_admin));
-      setAnswersByPeriod(answersFromRecords(loaded.records));
-      if (loaded.is_admin) {
-        await fetchAdminAccounts(login.session_token);
-      } else {
-        const journals = await loadGrowthJournals(login.session_token);
-        if (!journals.first_half) setJournalPromptTerm("first_half");
-      }
-      setPin("");
-      setAuthenticated(true);
-    } catch {
-      setLoginError("로그인 연결을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setLoginState("idle");
-    }
-  }
-
-  function clearSession() {
-    localStorage.removeItem(SESSION_KEY);
-    setAuthenticated(false);
-    setIsAdmin(false);
-    setAdminAccounts([]);
-    setAdminState("loading");
-    setDeletingAccountId("");
-    setSessionToken("");
-    setTeacherName("");
-    setPin("");
-    setAnswersByPeriod(blankPeriods());
-    setGrowthJournalRecords({});
-    setGrowthJournalAnswers({ first_half: {}, second_half: {} });
-    setActiveWorkspace("assessment");
-    setJournalPromptTerm(null);
-    setJournalSuccessTerm(null);
-    setSaveState("idle");
-  }
-
-  async function logout() {
-    const token = sessionToken;
-    clearSession();
-    if (token) {
-      try {
-        await callSupabaseRpc<void>("teacher_logout", { p_token: token });
-      } catch {
-        // The local session is already cleared.
-      }
-    }
-  }
-
-  async function deleteAdminAccount(accountId: string) {
-    if (!sessionToken) return;
-    setDeletingAccountId(accountId);
-    try {
-      const result = await callSupabaseRpc<AdminDeleteResponse>(
-        "admin_delete_account",
-        {
-          p_token: sessionToken,
-          p_account_id: accountId,
-        },
-      );
-      if (!result.success) {
-        if (result.error === "NOT_AUTHORIZED") clearSession();
-        throw new Error(result.error ?? "Unable to delete account.");
-      }
-      setAdminAccounts((current) =>
-        current.filter((account) => account.account_id !== accountId),
-      );
-    } catch {
-      window.alert("계정을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setDeletingAccountId("");
-    }
-  }
-
-  function setAnswer(
-    dimensionId: string,
-    itemIndex: number,
-    score: number,
-  ) {
-    setAnswersByPeriod((current) => ({
-      ...current,
-      [activePeriod]: {
-        ...current[activePeriod],
-        [`${dimensionId}-${itemIndex}`]: score,
-      },
-    }));
-    setSaveState("idle");
-  }
-
-  function resetPeriod() {
-    setAnswersByPeriod((current) => ({
-      ...current,
-      [activePeriod]: blankAnswers(),
-    }));
-    setSaveState("idle");
-  }
-
-  async function saveToSupabase() {
-    if (!sessionToken) {
-      setSaveState("error");
-      return;
-    }
-    setSaveState("saving");
-    const averages = Object.fromEntries(
-      skills.map((skill) => [skill.id, Number(skill.value.toFixed(2))]),
-    );
-
-    try {
-      const result = await callSupabaseRpc<SaveResponse>("teacher_save", {
-        p_token: sessionToken,
-        p_period: activePeriod,
-        p_answers: answers,
-        p_learning: averages.learning,
-        p_guidance: averages.guidance,
-        p_professional: averages.professional,
-        p_smart: averages.smart,
-        p_culture: averages.culture,
-        p_empathy: averages.empathy,
-        p_whole: averages.whole,
-      });
-      if (!result.success) {
-        if (result.error === "SESSION_EXPIRED") clearSession();
-        throw new Error(result.error ?? "Unable to save assessment.");
-      }
-      setSaveState("saved");
-      setRecommendationRefreshKey((current) => current + 1);
-    } catch {
-      setSaveState("error");
-    }
-  }
-
-  function setGrowthJournalAnswer(questionId: string, value: string) {
-    setGrowthJournalAnswers((current) => ({
-      ...current,
-      [growthJournalTerm]: {
-        ...current[growthJournalTerm],
-        [questionId]: value,
-      },
-    }));
-    setGrowthJournalState("idle");
-  }
-
-  async function saveGrowthJournal() {
-    if (!sessionToken) {
-      setGrowthJournalState("error");
-      return;
-    }
-    const answers = growthJournalAnswers[growthJournalTerm];
-    if (!growthJournalQuestions.some(({ id }) => answers[id]?.trim())) {
-      setGrowthJournalState("error");
-      return;
-    }
-    setGrowthJournalState("saving");
-    try {
-      const result = await callSupabaseRpc<GrowthJournalSaveResponse>(
-        "growth_journal_save",
-        {
-          p_token: sessionToken,
-          p_term: growthJournalTerm,
-          p_answers: answers,
-        },
-      );
-      if (!result.success) {
-        if (result.error === "SESSION_EXPIRED") clearSession();
-        throw new Error(result.error ?? "Unable to save growth journal.");
-      }
-      setGrowthJournalRecords((current) => ({
-        ...current,
-        [growthJournalTerm]: {
-          answers: { ...answers },
-          updated_at: result.updated_at,
-        },
-      }));
-      setGrowthJournalState("saved");
-      setJournalPromptTerm(null);
-      setJournalSuccessTerm(growthJournalTerm);
-    } catch {
-      setGrowthJournalState("error");
-    }
-  }
-
-  function openGrowthJournal(term: GrowthTerm = growthJournalTerm) {
-    setGrowthJournalTerm(term);
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="growth-summary-empty">기록…5275 tokens truncated…    setGrowthJournalTerm(term);
     setActiveWorkspace("journal");
     setJournalPromptTerm(null);
     setGrowthJournalState("idle");
@@ -1721,3 +1154,4 @@ export default function Home() {
     </main>
   );
 }
+
