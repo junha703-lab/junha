@@ -174,7 +174,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.9.0";
+const APP_VERSION = "1.9.1";
 const periods: Period[] = ["april", "october", "january"];
 const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
 const growthTermLabels: Record<GrowthTerm, string> = {
@@ -569,7 +569,13 @@ function GrowthJournalPanel({
         {growthJournalQuestions.map((question, index) => (
           <label className="journal-question" key={question.id}>
             <span>{index + 1}</span>
-            <strong>{question.label}</strong>
+            <strong>
+              {question.id === "next"
+                ? term === "first_half"
+                  ? "2월까지 더 키우고 싶은 역량은 무엇인가요?"
+                  : "앞으로도 계속 이어가고 싶은 역량은 무엇인가요?"
+                : question.label}
+            </strong>
             <textarea
               value={answers[question.id] ?? ""}
               onChange={(event) => onAnswerChange(question.id, event.target.value)}
@@ -789,6 +795,7 @@ export default function Home() {
     "idle" | "loading" | "saving" | "saved" | "error"
   >("idle");
   const [journalPromptTerm, setJournalPromptTerm] = useState<GrowthTerm | null>(null);
+  const [journalSuccessTerm, setJournalSuccessTerm] = useState<GrowthTerm | null>(null);
   const [activePeriod, setActivePeriod] = useState<Period>("april");
   const [openDimension, setOpenDimension] = useState("learning");
   const [answersByPeriod, setAnswersByPeriod] =
@@ -1018,6 +1025,7 @@ export default function Home() {
     setGrowthJournalAnswers({ first_half: {}, second_half: {} });
     setActiveWorkspace("assessment");
     setJournalPromptTerm(null);
+    setJournalSuccessTerm(null);
     setSaveState("idle");
   }
 
@@ -1159,6 +1167,7 @@ export default function Home() {
       }));
       setGrowthJournalState("saved");
       setJournalPromptTerm(null);
+      setJournalSuccessTerm(growthJournalTerm);
     } catch {
       setGrowthJournalState("error");
     }
@@ -1171,6 +1180,19 @@ export default function Home() {
     setGrowthJournalState("idle");
     window.requestAnimationFrame(() => {
       document.getElementById("growth-journal")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+
+  function goToOctoberAssessment() {
+    setJournalSuccessTerm(null);
+    setActiveWorkspace("assessment");
+    setActivePeriod("october");
+    setSaveState("idle");
+    window.requestAnimationFrame(() => {
+      document.getElementById("self-assessment")?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -1662,6 +1684,36 @@ export default function Home() {
               <button type="button" className="ghost-button" onClick={() => setJournalPromptTerm(null)}>
                 나중에 작성
               </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {journalSuccessTerm && (
+        <div className="journal-modal-backdrop" role="presentation">
+          <section
+            className="journal-modal journal-success-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="journal-success-title"
+          >
+            <span className="journal-success-mark" aria-hidden="true">✓</span>
+            <span className="journal-modal-badge">CARE 교사 성장기록</span>
+            <h2 id="journal-success-title">멋져요! 성장기록이 저장되었어요.</h2>
+            <p>
+              {journalSuccessTerm === "first_half"
+                ? "이제 10월 역량진단에서 지금까지의 배움과 실천을 이어서 돌아보세요."
+                : "지금까지의 배움과 실천이 다음 성장으로 이어지고 있습니다."}
+            </p>
+            <div className="journal-modal-actions">
+              {journalSuccessTerm === "first_half" ? (
+                <button type="button" className="sheet-button" onClick={goToOctoberAssessment}>
+                  10월 역량진단으로 가기 ↗
+                </button>
+              ) : (
+                <button type="button" className="sheet-button" onClick={() => setJournalSuccessTerm(null)}>
+                  확인했어요
+                </button>
+              )}
             </div>
           </section>
         </div>

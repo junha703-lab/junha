@@ -3169,6 +3169,27 @@ footer {
   letter-spacing: 0.04em;
 }
 
+.journal-success-modal {
+  text-align: center;
+}
+
+.journal-success-mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: #e9f7ef;
+  color: #2e8d79;
+  font-size: 31px;
+  font-weight: 800;
+}
+
+.journal-success-modal .journal-modal-actions {
+  justify-content: center;
+}
+
 .journal-modal h2 {
   margin: 12px 0;
   color: #17366f;
