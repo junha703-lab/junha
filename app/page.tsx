@@ -1531,28 +1531,40 @@ export default function Home() {
           type="button"
           role="tab"
           aria-selected={activeWorkspace === "assessment"}
-          className={activeWorkspace === "assessment" ? "active" : ""}
+          className={`workspace-tab workspace-tab-assessment${activeWorkspace === "assessment" ? " active" : ""}`}
           onClick={() => setActiveWorkspace("assessment")}
         >
-          교원역량 자가진단
+          <span className="workspace-tab-index">01</span>
+          <span className="workspace-tab-copy">
+            <small>DIAGNOSIS</small>
+            <strong>교원역량 자가진단</strong>
+          </span>
         </button>
         <button
           type="button"
           role="tab"
           aria-selected={activeWorkspace === "support"}
-          className={activeWorkspace === "support" ? "active" : ""}
+          className={`workspace-tab workspace-tab-support${activeWorkspace === "support" ? " active" : ""}`}
           onClick={() => setActiveWorkspace("support")}
         >
-          맞춤형 성장지원
+          <span className="workspace-tab-index">02</span>
+          <span className="workspace-tab-copy">
+            <small>GROWTH SUPPORT</small>
+            <strong>맞춤형 성장지원</strong>
+          </span>
         </button>
         <button
           type="button"
           role="tab"
           aria-selected={activeWorkspace === "journal"}
-          className={activeWorkspace === "journal" ? "active" : ""}
+          className={`workspace-tab workspace-tab-journal${activeWorkspace === "journal" ? " active" : ""}`}
           onClick={() => openGrowthJournal()}
         >
-          CARE 성장기록
+          <span className="workspace-tab-index">03</span>
+          <span className="workspace-tab-copy">
+            <small>CARE JOURNAL</small>
+            <strong>CARE 성장기록</strong>
+          </span>
         </button>
       </div>
 
@@ -1788,7 +1800,8 @@ export default function Home() {
               className={growthJournalView === "first_half" ? "active" : ""}
               onClick={() => openGrowthJournal("first_half")}
             >
-              상반기
+              <span>상반기</span>
+              <small>4월–8월</small>
             </button>
             <button
               type="button"
@@ -1797,7 +1810,8 @@ export default function Home() {
               className={growthJournalView === "second_half" ? "active" : ""}
               onClick={() => openGrowthJournal("second_half")}
             >
-              하반기
+              <span>하반기</span>
+              <small>9월–1월</small>
             </button>
             <button
               type="button"
@@ -1809,7 +1823,8 @@ export default function Home() {
                 setJournalPromptTerm(null);
               }}
             >
-              나의 성장 돌아보기
+              <span>나의 성장 돌아보기</span>
+              <small>전체 기록</small>
             </button>
           </div>
           {growthJournalView === "summary" ? (
