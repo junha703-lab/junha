@@ -28,6 +28,13 @@ type GrowthHighlight = {
   message: string;
 };
 type AnswersByPeriod = Record<Period, Record<string, number>>;
+type GrowthTerm = "first_half" | "second_half";
+type GrowthJournalAnswers = Record<string, string>;
+type GrowthJournalRecord = {
+  answers?: GrowthJournalAnswers;
+  created_at?: string;
+  updated_at?: string;
+};
 type StoredRecord = {
   answers?: Record<string, number>;
   submitted_at?: string;
@@ -45,6 +52,16 @@ type LoadResponse = {
   teacher_name?: string;
   is_admin?: boolean;
   records?: Partial<Record<Period, StoredRecord>>;
+};
+type GrowthJournalLoadResponse = {
+  success: boolean;
+  error?: "SESSION_EXPIRED";
+  records?: Partial<Record<GrowthTerm, GrowthJournalRecord>>;
+};
+type GrowthJournalSaveResponse = {
+  success: boolean;
+  error?: "SESSION_EXPIRED" | "INVALID_INPUT";
+  updated_at?: string;
 };
 type SaveResponse = {
   success: boolean;
@@ -157,8 +174,31 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.8.6";
+const APP_VERSION = "1.9.0";
 const periods: Period[] = ["april", "october", "january"];
+const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
+const growthTermLabels: Record<GrowthTerm, string> = {
+  first_half: "상반기 CARE 성장기록 · 4~8월",
+  second_half: "하반기 CARE 성장기록 · 10월~1월",
+};
+const growthJournalQuestions = [
+  {
+    id: "learning",
+    label: "지금까지 참여한 연수·연구·공동체 활동 중 기억에 남거나 도움이 된 것은 무엇인가요?",
+  },
+  {
+    id: "practice",
+    label: "배운 내용을 바탕으로 수업이나 학생 지도에서 새롭게 시도한 것이 있나요?",
+  },
+  {
+    id: "change",
+    label: "그 과정에서 발견한 학생의 반응이나 작은 변화가 있다면 적어 주세요.",
+  },
+  {
+    id: "next",
+    label: "2월까지 더 실천해 보고 싶은 것은 무엇인가요?",
+  },
+];
 const periodLabels: Record<Period, string> = {
   april: "4월",
   october: "10월",
@@ -477,6 +517,79 @@ function downloadRadarPng(
   }, "image/png");
 }
 
+function GrowthJournalPanel({
+  term,
+  answers,
+  records,
+  state,
+  onTermChange,
+  onAnswerChange,
+  onSave,
+}: {
+  term: GrowthTerm;
+  answers: GrowthJournalAnswers;
+  records: Partial<Record<GrowthTerm, GrowthJournalRecord>>;
+  state: "idle" | "loading" | "saving" | "saved" | "error";
+  onTermChange: (term: GrowthTerm) => void;
+  onAnswerChange: (questionId: string, value: string) => void;
+  onSave: () => Promise<void>;
+}) {
+  return (
+    <section className="growth-journal-panel" id="growth-journal">
+      <div className="section-kicker">CARE <span>교사 성장기록</span></div>
+      <div className="journal-heading">
+        <div>
+          <h2>배움과 실천을 이어가는 성장기록</h2>
+          <p className="muted">
+            지금까지의 배움과 실천을 가볍게 돌아보는 기록입니다. 문항마다 한두 문장 정도로 편하게 작성해 주세요.
+          </p>
+        </div>
+        <span className="journal-status">{records[term] ? "기록 있음" : "아직 작성 전"}</span>
+      </div>
+      <div className="journal-term-tabs" role="tablist" aria-label="성장기록 기간">
+        {growthTerms.map((growthTerm) => (
+          <button
+            key={growthTerm}
+            type="button"
+            role="tab"
+            aria-selected={term === growthTerm}
+            className={term === growthTerm ? "active" : ""}
+            onClick={() => onTermChange(growthTerm)}
+          >
+            {growthTermLabels[growthTerm]}
+          </button>
+        ))}
+      </div>
+      <p className="journal-period-note">
+        {term === "first_half"
+          ? "4월부터 8월까지의 배움과 실천을 돌아봅니다."
+          : "10월부터 1월까지의 변화와 다음 실천을 기록합니다."}
+      </p>
+      <div className="journal-question-list">
+        {growthJournalQuestions.map((question, index) => (
+          <label className="journal-question" key={question.id}>
+            <span>{index + 1}</span>
+            <strong>{question.label}</strong>
+            <textarea
+              value={answers[question.id] ?? ""}
+              onChange={(event) => onAnswerChange(question.id, event.target.value)}
+              rows={4}
+              placeholder="편하게 적어 주세요."
+            />
+          </label>
+        ))}
+      </div>
+      <div className="journal-actions">
+        <button className="sheet-button" type="button" onClick={() => void onSave()} disabled={state === "saving"}>
+          {state === "saving" ? "성장기록 저장 중…" : "성장기록 저장하기 ↗"}
+        </button>
+        {state === "saved" && <p className="save-message success">성장기록이 저장되었습니다. 다른 기기에서도 확인할 수 있습니다.</p>}
+        {state === "error" && <p className="save-message error">내용을 한 문항 이상 작성한 뒤 다시 저장해 주세요.</p>}
+      </div>
+    </section>
+  );
+}
+
 function AdminDashboard({
   accounts,
   state,
@@ -664,10 +777,60 @@ export default function Home() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [recommendationRefreshKey, setRecommendationRefreshKey] = useState(0);
+  const [activeWorkspace, setActiveWorkspace] = useState<"assessment" | "journal">("assessment");
+  const [growthJournalRecords, setGrowthJournalRecords] = useState<
+    Partial<Record<GrowthTerm, GrowthJournalRecord>>
+  >({});
+  const [growthJournalAnswers, setGrowthJournalAnswers] = useState<
+    Record<GrowthTerm, GrowthJournalAnswers>
+  >({ first_half: {}, second_half: {} });
+  const [growthJournalTerm, setGrowthJournalTerm] = useState<GrowthTerm>("first_half");
+  const [growthJournalState, setGrowthJournalState] = useState<
+    "idle" | "loading" | "saving" | "saved" | "error"
+  >("idle");
+  const [journalPromptTerm, setJournalPromptTerm] = useState<GrowthTerm | null>(null);
   const [activePeriod, setActivePeriod] = useState<Period>("april");
   const [openDimension, setOpenDimension] = useState("learning");
   const [answersByPeriod, setAnswersByPeriod] =
     useState<AnswersByPeriod>(blankPeriods);
+
+  function applyGrowthJournalRecords(
+    records?: Partial<Record<GrowthTerm, GrowthJournalRecord>>,
+  ) {
+    const nextAnswers: Record<GrowthTerm, GrowthJournalAnswers> = {
+      first_half: {},
+      second_half: {},
+    };
+    growthTerms.forEach((term) => {
+      const answers = records?.[term]?.answers;
+      if (answers && typeof answers === "object") {
+        nextAnswers[term] = { ...answers };
+      }
+    });
+    setGrowthJournalRecords(records ?? {});
+    setGrowthJournalAnswers(nextAnswers);
+  }
+
+  async function loadGrowthJournals(token: string) {
+    const loaded = await callSupabaseRpc<GrowthJournalLoadResponse>(
+      "growth_journal_load",
+      { p_token: token },
+    );
+    if (!loaded.success) {
+      if (loaded.error === "SESSION_EXPIRED") clearSession();
+      throw new Error(loaded.error ?? "Unable to load growth journals.");
+    }
+    applyGrowthJournalRecords(loaded.records);
+    return loaded.records ?? {};
+  }
+
+  function hasGrowthJournal(term: GrowthTerm) {
+    const answers = growthJournalRecords[term]?.answers;
+    return Boolean(
+      answers &&
+        growthJournalQuestions.some(({ id }) => String(answers[id] ?? "").trim()),
+    );
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -695,6 +858,9 @@ export default function Home() {
           setAuthenticated(true);
           if (loaded.is_admin) {
             await fetchAdminAccounts(savedToken);
+          } else {
+            const journals = await loadGrowthJournals(savedToken);
+            if (!journals.first_half) setJournalPromptTerm("first_half");
           }
         }
       } catch {
@@ -824,6 +990,9 @@ export default function Home() {
       setAnswersByPeriod(answersFromRecords(loaded.records));
       if (loaded.is_admin) {
         await fetchAdminAccounts(login.session_token);
+      } else {
+        const journals = await loadGrowthJournals(login.session_token);
+        if (!journals.first_half) setJournalPromptTerm("first_half");
       }
       setPin("");
       setAuthenticated(true);
@@ -845,6 +1014,10 @@ export default function Home() {
     setTeacherName("");
     setPin("");
     setAnswersByPeriod(blankPeriods());
+    setGrowthJournalRecords({});
+    setGrowthJournalAnswers({ first_half: {}, second_half: {} });
+    setActiveWorkspace("assessment");
+    setJournalPromptTerm(null);
     setSaveState("idle");
   }
 
@@ -940,6 +1113,68 @@ export default function Home() {
     } catch {
       setSaveState("error");
     }
+  }
+
+  function setGrowthJournalAnswer(questionId: string, value: string) {
+    setGrowthJournalAnswers((current) => ({
+      ...current,
+      [growthJournalTerm]: {
+        ...current[growthJournalTerm],
+        [questionId]: value,
+      },
+    }));
+    setGrowthJournalState("idle");
+  }
+
+  async function saveGrowthJournal() {
+    if (!sessionToken) {
+      setGrowthJournalState("error");
+      return;
+    }
+    const answers = growthJournalAnswers[growthJournalTerm];
+    if (!growthJournalQuestions.some(({ id }) => answers[id]?.trim())) {
+      setGrowthJournalState("error");
+      return;
+    }
+    setGrowthJournalState("saving");
+    try {
+      const result = await callSupabaseRpc<GrowthJournalSaveResponse>(
+        "growth_journal_save",
+        {
+          p_token: sessionToken,
+          p_term: growthJournalTerm,
+          p_answers: answers,
+        },
+      );
+      if (!result.success) {
+        if (result.error === "SESSION_EXPIRED") clearSession();
+        throw new Error(result.error ?? "Unable to save growth journal.");
+      }
+      setGrowthJournalRecords((current) => ({
+        ...current,
+        [growthJournalTerm]: {
+          answers: { ...answers },
+          updated_at: result.updated_at,
+        },
+      }));
+      setGrowthJournalState("saved");
+      setJournalPromptTerm(null);
+    } catch {
+      setGrowthJournalState("error");
+    }
+  }
+
+  function openGrowthJournal(term: GrowthTerm = growthJournalTerm) {
+    setGrowthJournalTerm(term);
+    setActiveWorkspace("journal");
+    setJournalPromptTerm(null);
+    setGrowthJournalState("idle");
+    window.requestAnimationFrame(() => {
+      document.getElementById("growth-journal")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   }
 
   if (!authReady) return <div className="auth-loading" />;
@@ -1134,6 +1369,29 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="content-tabs" role="tablist" aria-label="교원 성장 기록 메뉴">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeWorkspace === "assessment"}
+          className={activeWorkspace === "assessment" ? "active" : ""}
+          onClick={() => setActiveWorkspace("assessment")}
+        >
+          교원역량 자가진단
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeWorkspace === "journal"}
+          className={activeWorkspace === "journal" ? "active" : ""}
+          onClick={() => openGrowthJournal()}
+        >
+          CARE 성장기록
+        </button>
+      </div>
+
+      {activeWorkspace === "assessment" ? (
+        <>
       <nav className="growth-journey" aria-label="교원역량 성장 3단계">
         <a className="journey-step journey-one" href="#self-assessment">
           <b>1</b>
@@ -1203,6 +1461,9 @@ export default function Home() {
               onClick={() => {
                 setActivePeriod("january");
                 setSaveState("idle");
+                if (!hasGrowthJournal("second_half")) {
+                  setJournalPromptTerm("second_half");
+                }
               }}
             >
               1월 평가
@@ -1356,6 +1617,21 @@ export default function Home() {
         refreshKey={recommendationRefreshKey}
         growthHighlight={growthHighlight}
       />
+        </>
+      ) : (
+        <GrowthJournalPanel
+          term={growthJournalTerm}
+          answers={growthJournalAnswers[growthJournalTerm]}
+          records={growthJournalRecords}
+          state={growthJournalState}
+          onTermChange={(term) => {
+            setGrowthJournalTerm(term);
+            setGrowthJournalState("idle");
+          }}
+          onAnswerChange={setGrowthJournalAnswer}
+          onSave={saveGrowthJournal}
+        />
+      )}
       <footer>
         <span>대전양지초등학교 · 맞춤형 CARE 지원 모델</span>
         <span>
@@ -1363,6 +1639,33 @@ export default function Home() {
         </span>
       </footer>
       <div className="developer-credit">앱개발자: 도준하</div>
+      {journalPromptTerm && (
+        <div className="journal-modal-backdrop" role="presentation">
+          <section
+            className="journal-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="journal-modal-title"
+          >
+            <span className="journal-modal-badge">CARE 교사 성장기록</span>
+            <h2 id="journal-modal-title">
+              {journalPromptTerm === "first_half" ? "상반기 성장기록을 남겨보세요" : "하반기 성장기록을 남겨보세요"}
+            </h2>
+            <p>
+              {growthTermLabels[journalPromptTerm]}에 대한 배움과 실천을 가볍게 돌아보는 기록입니다.
+              문항마다 한두 문장 정도로 편하게 작성해 주세요.
+            </p>
+            <div className="journal-modal-actions">
+              <button type="button" className="sheet-button" onClick={() => openGrowthJournal(journalPromptTerm)}>
+                작성하러 가기
+              </button>
+              <button type="button" className="ghost-button" onClick={() => setJournalPromptTerm(null)}>
+                나중에 작성
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
