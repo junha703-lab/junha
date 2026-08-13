@@ -73,6 +73,7 @@ type AdminAccount = {
   teacher_name: string;
   created_at: string;
   records?: Partial<Record<Period, StoredRecord>>;
+  journals?: Partial<Record<GrowthTerm, GrowthJournalRecord>>;
 };
 type AdminListResponse = {
   success: boolean;
@@ -199,6 +200,12 @@ const growthJournalQuestions = [
     label: "2월까지 더 실천해 보고 싶은 것은 무엇인가요?",
   },
 ];
+const growthJournalSummaryItems = [
+  { key: "learning", label: "배운 것" },
+  { key: "practice", label: "새롭게 시도한 것" },
+  { key: "change", label: "학생의 변화" },
+  { key: "next", label: "이어가고 싶은 역량" },
+] as const;
 const periodLabels: Record<Period, string> = {
   april: "4월",
   october: "10월",
@@ -534,15 +541,9 @@ function GrowthJournalPanel({
   onAnswerChange: (questionId: string, value: string) => void;
   onSave: () => Promise<void>;
 }) {
-  const summaryItems = [
-    { key: "learning", label: "배운 것" },
-    { key: "practice", label: "새롭게 시도한 것" },
-    { key: "change", label: "학생의 변화" },
-    { key: "next", label: "이어가고 싶은 역량" },
-  ] as const;
   const savedTerms = growthTerms.filter((growthTerm) => {
     const savedAnswers = records[growthTerm]?.answers;
-    return savedAnswers && summaryItems.some(({ key }) => String(savedAnswers[key] ?? "").trim());
+    return savedAnswers && growthJournalSummaryItems.some(({ key }) => String(savedAnswers[key] ?? "").trim());
   });
 
   return (
@@ -592,7 +593,7 @@ function GrowthJournalPanel({
                 <article className="growth-summary-card" key={growthTerm}>
                   <h4>{growthTermLabels[growthTerm]}</h4>
                   <div className="growth-summary-items">
-                    {summaryItems.map(({ key, label }) => {
+                    {growthJournalSummaryItems.map(({ key, label }) => {
                       const value = String(savedAnswers[key] ?? "").trim();
                       return value ? (
                         <div className="growth-summary-item" key={key}>
@@ -604,10 +605,7 @@ function GrowthJournalPanel({
                   </div>
                 </article>
               );
-            })}
-          </div>
-        ) : (
-          <p className="growth-summary-empty">기록…5275 tokens truncated…    setGrowthJournalTerm(term);
+         …5746 tokens truncated…    setGrowthJournalTerm(term);
     setActiveWorkspace("journal");
     setJournalPromptTerm(null);
     setGrowthJournalState("idle");
