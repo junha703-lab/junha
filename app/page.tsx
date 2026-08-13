@@ -175,7 +175,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.9.4";
+const APP_VERSION = "1.9.5";
 const periods: Period[] = ["april", "october", "january"];
 const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
 const growthTermLabels: Record<GrowthTerm, string> = {
@@ -601,36 +601,36 @@ function GrowthSummaryPanel({
       <div className="section-kicker">CARE <span>나의 성장 돌아보기</span></div>
       <div className="reflection-hero">
         <div>
-          <p className="reflection-eyebrow">작은 기록이 모여, 나만의 성장 이야기가 됩니다</p>
-          <h2>배움이 자라고 실천이 피어나는 시간</h2>
+          <p className="reflection-eyebrow">지난 배움과 실천을 차분히 돌아봅니다</p>
+          <h2>배움과 실천을 돌아보는 시간</h2>
           <p className="reflection-intro">
-            상반기와 하반기에 남긴 문장을 한곳에 모아 보세요. 잘한 일은 따뜻하게 간직하고,
-            다음 걸음은 가볍게 이어갈 수 있도록 정리했습니다.
+            상반기와 하반기에 남긴 기록을 한곳에서 살펴보고,
+            다음 실천을 이어갈 방향을 정리해 보세요.
           </p>
         </div>
         <div className="reflection-badge" aria-label="성장 기록 안내">
-          <span>오늘도</span>
-          <strong>한 걸음</strong>
-          <span>성장 중</span>
+          <span>CARE</span>
+          <strong>성장 기록</strong>
+          <span>정리</span>
         </div>
       </div>
       <div className="reflection-path" aria-label="성장 기록 흐름">
         <div className="reflection-path-step is-first">
           <span>01</span>
-          <strong>배움의 씨앗</strong>
-          <small>상반기 기록</small>
+          <strong>상반기</strong>
+          <small>배움과 실천</small>
         </div>
         <i aria-hidden="true">→</i>
         <div className="reflection-path-step is-second">
           <span>02</span>
-          <strong>실천의 잎</strong>
-          <small>하반기 기록</small>
+          <strong>하반기</strong>
+          <small>배움과 실천</small>
         </div>
         <i aria-hidden="true">→</i>
         <div className="reflection-path-step is-third">
           <span>03</span>
-          <strong>다음의 꽃</strong>
-          <small>이어갈 성장</small>
+          <strong>다음 실천</strong>
+          <small>앞으로의 방향</small>
         </div>
       </div>
       <div className="reflection-cards">
@@ -645,7 +645,7 @@ function GrowthSummaryPanel({
                 <span className="reflection-card-number">0{index + 1}</span>
                 <div>
                   <span className="reflection-card-period">{growthTermLabels[term]}</span>
-                  <h3>{term === "first_half" ? "배움의 씨앗" : "실천의 잎"}</h3>
+                  <h3>{term === "first_half" ? "상반기 기록" : "하반기 기록"}</h3>
                 </div>
                 <span className={`reflection-card-status ${hasRecord ? "is-written" : ""}`}>
                   {hasRecord ? "기록 있음" : "기록 전"}
@@ -665,7 +665,7 @@ function GrowthSummaryPanel({
                 </div>
               ) : (
                 <p className="reflection-empty">
-                  아직 이 계절의 기록이 없어요. 그때의 나에게 작은 메모를 남겨 보세요.
+                  아직 이 기간의 기록이 없습니다. 해당 기간의 배움과 실천을 작성해 보세요.
                 </p>
               )}
               <button type="button" className="reflection-card-button" onClick={() => onOpenJournal(term)}>
@@ -677,7 +677,7 @@ function GrowthSummaryPanel({
       </div>
       <div className="reflection-closing">
         <span aria-hidden="true">☘</span>
-        <p>성장은 완성하는 일이 아니라, 나를 다정하게 다시 바라보는 일입니다.</p>
+        <p>기록을 바탕으로 다음 실천을 계획해 보세요.</p>
       </div>
     </section>
   );
@@ -919,7 +919,9 @@ export default function Home() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [recommendationRefreshKey, setRecommendationRefreshKey] = useState(0);
-  const [activeWorkspace, setActiveWorkspace] = useState<"assessment" | "journal">("assessment");
+  const [activeWorkspace, setActiveWorkspace] = useState<
+    "assessment" | "support" | "journal"
+  >("assessment");
   const [growthJournalRecords, setGrowthJournalRecords] = useState<
     Partial<Record<GrowthTerm, GrowthJournalRecord>>
   >({});
@@ -1544,6 +1546,15 @@ export default function Home() {
         <button
           type="button"
           role="tab"
+          aria-selected={activeWorkspace === "support"}
+          className={activeWorkspace === "support" ? "active" : ""}
+          onClick={() => setActiveWorkspace("support")}
+        >
+          맞춤형 성장지원
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={activeWorkspace === "journal"}
           className={activeWorkspace === "journal" ? "active" : ""}
           onClick={() => openGrowthJournal()}
@@ -1554,7 +1565,7 @@ export default function Home() {
 
       {activeWorkspace === "assessment" ? (
         <>
-      <nav className="growth-journey" aria-label="교원역량 성장 3단계">
+      <nav className="growth-journey" aria-label="교원역량 자가진단과 성장지도">
         <a className="journey-step journey-one" href="#self-assessment">
           <b>1</b>
           <span>
@@ -1568,14 +1579,6 @@ export default function Home() {
           <span>
             <small>MAP</small>
             역량 성장지도
-          </span>
-        </a>
-        <i aria-hidden="true">→</i>
-        <a className="journey-step journey-three" href="#growth-recommendations">
-          <b>3</b>
-          <span>
-            <small>NEXT</small>
-            맞춤형 성장 추천
           </span>
         </a>
       </nav>
@@ -1772,14 +1775,15 @@ export default function Home() {
           </div>
         </section>
       </section>
-      <GrowthRecommendations
-        sessionToken={sessionToken}
-        period={activePeriod}
-        complete={responded === total}
-        refreshKey={recommendationRefreshKey}
-        growthHighlight={growthHighlight}
-      />
         </>
+      ) : activeWorkspace === "support" ? (
+        <GrowthRecommendations
+          sessionToken={sessionToken}
+          period={activePeriod}
+          complete={responded === total}
+          refreshKey={recommendationRefreshKey}
+          growthHighlight={growthHighlight}
+        />
       ) : (
         <div className="journal-workspace">
           <div className="journal-view-tabs" role="tablist" aria-label="CARE 성장기록 보기">

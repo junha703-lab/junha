@@ -3185,6 +3185,23 @@ footer {
   padding: 44px 48px 36px;
 }
 
+.growth-reflection-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.42)),
+    url("/recommendation-section-scenes.png") center / cover no-repeat;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.growth-reflection-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
 .reflection-sparkle {
   position: absolute;
   color: #e7b94d;
