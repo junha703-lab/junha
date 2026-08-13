@@ -1048,16 +1048,12 @@ export default function Home() {
   const skills = useMemo(() => makeSkills(answers), [answers]);
   const comparisonLayers = useMemo<ComparisonLayer[]>(
     () => comparisonLayersFor(activePeriod, answersByPeriod),
-    [activePeriod, answersByPeriod.april, answersByPeriod.october],
+    [activePeriod, answersByPeriod],
   );
   const growthHighlight = useMemo<GrowthHighlight>(() => {
     const currentSkills = makeSkills(answersByPeriod[activePeriod]);
     const previousPeriod: Period | null =
-      activePeriod === "october"
-        ? "april"
-        : activePeriod === "january"
-          ? "october"
-          : null;
+      activePeriod === "april" ? null : "april";
     const previousSkills = previousPeriod
       ? makeSkills(answersByPeriod[previousPeriod])
       : null;
@@ -1070,8 +1066,7 @@ export default function Home() {
       }))
       .sort(
         (left, right) =>
-          right.delta - left.delta ||
-          right.skill.value - left.skill.value,
+          right.skill.value - left.skill.value || right.delta - left.delta,
       )[0];
 
     return {
@@ -1084,9 +1079,7 @@ export default function Home() {
     };
   }, [
     activePeriod,
-    answersByPeriod.april,
-    answersByPeriod.october,
-    answersByPeriod.january,
+    answersByPeriod,
   ]);
   const responded = Object.values(answers).filter(Boolean).length;
   const total = Object.keys(answers).length;
