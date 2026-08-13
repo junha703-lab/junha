@@ -3198,6 +3198,16 @@ footer {
   margin-bottom: 16px;
 }
 
+.growth-summary-heading-main {
+  min-width: 0;
+}
+
+.growth-summary-heading .journal-term-tabs {
+  flex: none;
+  margin: 0;
+  flex-wrap: nowrap;
+}
+
 .growth-summary-heading h3 {
   margin: 6px 0 0;
   color: #17366f;
@@ -3422,6 +3432,11 @@ footer {
 
   .growth-summary-heading {
     display: block;
+  }
+
+  .growth-summary-heading .journal-term-tabs {
+    margin-top: 14px;
+    flex-wrap: wrap;
   }
 
   .growth-summary-heading p {

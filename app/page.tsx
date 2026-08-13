@@ -175,7 +175,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.9.2";
+const APP_VERSION = "1.9.3";
 const periods: Period[] = ["april", "october", "january"];
 const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
 const growthTermLabels: Record<GrowthTerm, string> = {
@@ -541,10 +541,10 @@ function GrowthJournalPanel({
   onAnswerChange: (questionId: string, value: string) => void;
   onSave: () => Promise<void>;
 }) {
-  const savedTerms = growthTerms.filter((growthTerm) => {
-    const savedAnswers = records[growthTerm]?.answers;
-    return savedAnswers && growthJournalSummaryItems.some(({ key }) => String(savedAnswers[key] ?? "").trim());
-  });
+  const selectedAnswers = records[term]?.answers ?? {};
+  const hasSelectedSummary = growthJournalSummaryItems.some(({ key }) =>
+    String(selectedAnswers[key] ?? "").trim(),
+  );
 
   return (
     <section className="growth-journal-panel" id="growth-journal">
@@ -558,59 +558,54 @@ function GrowthJournalPanel({
         </div>
         <span className="journal-status">{records[term] ? "기록 있음" : "아직 작성 전"}</span>
       </div>
-      <div className="journal-term-tabs" role="tablist" aria-label="성장기록 기간">
-        {growthTerms.map((growthTerm) => (
-          <button
-            key={growthTerm}
-            type="button"
-            role="tab"
-            aria-selected={term === growthTerm}
-            className={term === growthTerm ? "active" : ""}
-            onClick={() => onTermChange(growthTerm)}
-          >
-            {growthTermLabels[growthTerm]}
-          </button>
-        ))}
+      <div className="growth-summary" aria-labelledby="growth-summary-heading">
+        <div className="growth-summary-heading">
+          <div className="growth-summary-heading-main">
+            <span className="section-kicker">MY CARE FLOW</span>
+            <h3 id="growth-summary-heading">나의 성장 돌아보기</h3>
+          </div>
+          <div className="journal-term-tabs" role="tablist" aria-label="성장기록 기간">
+            {growthTerms.map((growthTerm) => (
+              <button
+                key={growthTerm}
+                type="button"
+                role="tab"
+                aria-selected={term === growthTerm}
+                className={term === growthTerm ? "active" : ""}
+                onClick={() => onTermChange(growthTerm)}
+              >
+                {growthTermLabels[growthTerm]}
+              </button>
+            ))}
+          </div>
+          <p>저장한 기록을 기간별로 한눈에 정리해 보세요.</p>
+        </div>
+        {hasSelectedSummary ? (
+          <div className="growth-summary-grid">
+            <article className="growth-summary-card" key={term}>
+              <h4>{growthTermLabels[term]}</h4>
+              <div className="growth-summary-items">
+                {growthJournalSummaryItems.map(({ key, label }) => {
+                  const value = String(selectedAnswers[key] ?? "").trim();
+                  return value ? (
+                    <div className="growth-summary-item" key={key}>
+                      <strong>{label}</strong>
+                      <p>{value}</p>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            </article>
+          </div>
+        ) : (
+          <p className="growth-summary-empty">이 기간의 기록을 저장하면 이곳에서 성장 흐름을 한눈에 볼 수 있어요.</p>
+        )}
       </div>
       <p className="journal-period-note">
         {term === "first_half"
           ? "4월부터 8월까지의 배움과 실천을 돌아봅니다."
           : "10월부터 1월까지의 변화와 다음 실천을 기록합니다."}
       </p>
-      <div className="growth-summary" aria-labelledby="growth-summary-heading">
-        <div className="growth-summary-heading">
-          <div>
-            <span className="section-kicker">MY CARE FLOW</span>
-            <h3 id="growth-summary-heading">나의 성장 돌아보기</h3>
-          </div>
-          <p>저장한 기록을 기간별로 한눈에 정리해 보세요.</p>
-        </div>
-        {savedTerms.length ? (
-          <div className="growth-summary-grid">
-            {savedTerms.map((growthTerm) => {
-              const savedAnswers = records[growthTerm]?.answers ?? {};
-              return (
-                <article className="growth-summary-card" key={growthTerm}>
-                  <h4>{growthTermLabels[growthTerm]}</h4>
-                  <div className="growth-summary-items">
-                    {growthJournalSummaryItems.map(({ key, label }) => {
-                      const value = String(savedAnswers[key] ?? "").trim();
-                      return value ? (
-                        <div className="growth-summary-item" key={key}>
-                          <strong>{label}</strong>
-                          <p>{value}</p>
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="growth-summary-empty">기록을 저장하면 이곳에서 성장 흐름을 한눈에 볼 수 있어요.</p>
-        )}
-      </div>
       <div className="journal-question-list">
         {growthJournalQuestions.map((question, index) => (
           <label className="journal-question" key={question.id}>
