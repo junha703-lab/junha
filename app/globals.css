@@ -3131,6 +3131,326 @@ footer {
   box-shadow: 0 8px 18px rgba(38, 87, 174, 0.16);
 }
 
+.journal-workspace {
+  position: relative;
+}
+
+.journal-view-tabs {
+  display: flex;
+  gap: 12px;
+  max-width: 1240px;
+  margin: 28px auto 18px;
+  padding: 0 24px;
+}
+
+.journal-view-tabs button {
+  appearance: none;
+  border: 1px solid #d9e5ef;
+  border-radius: 18px;
+  background: #fff;
+  color: #58708a;
+  cursor: pointer;
+  font: 700 16px/1.2 "Trebuchet MS", "Noto Sans KR", sans-serif;
+  padding: 15px 24px;
+  transition: 0.2s ease;
+}
+
+.journal-view-tabs button:hover,
+.journal-view-tabs button:focus-visible {
+  border-color: #8bb5d0;
+  color: #24568b;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.journal-view-tabs button.active {
+  border-color: #2b63b6;
+  background: linear-gradient(135deg, #2b63b6, #397bbb);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(43, 99, 182, 0.2);
+}
+
+.growth-reflection-panel {
+  position: relative;
+  max-width: 1240px;
+  margin: 0 auto 48px;
+  overflow: hidden;
+  border: 1px solid #d7e6e8;
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at 86% 12%, rgba(255, 223, 130, 0.32) 0 5px, transparent 6px),
+    radial-gradient(circle at 14% 74%, rgba(99, 191, 174, 0.2) 0 4px, transparent 5px),
+    linear-gradient(145deg, #fffdf8 0%, #f5fbfa 48%, #f5f8ff 100%);
+  box-shadow: 0 20px 50px rgba(53, 96, 115, 0.1);
+  padding: 44px 48px 36px;
+}
+
+.reflection-sparkle {
+  position: absolute;
+  color: #e7b94d;
+  font-family: Georgia, serif;
+  font-size: 34px;
+  pointer-events: none;
+}
+
+.reflection-sparkle-one {
+  top: 32px;
+  right: 12%;
+}
+
+.reflection-sparkle-two {
+  top: 132px;
+  right: 8%;
+  color: #6bb8a7;
+  font-size: 46px;
+}
+
+.reflection-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  margin-top: 16px;
+}
+
+.reflection-eyebrow {
+  margin: 0 0 10px;
+  color: #c38345;
+  font: 700 14px/1.4 "Trebuchet MS", "Noto Sans KR", sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.reflection-hero h2 {
+  margin: 0;
+  color: #194779;
+  font: 700 clamp(28px, 4vw, 48px)/1.2 "Trebuchet MS", "Noto Sans KR", sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.reflection-intro {
+  max-width: 720px;
+  margin: 14px 0 0;
+  color: #5d7183;
+  line-height: 1.8;
+}
+
+.reflection-badge {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  border: 7px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  background: #f9d87d;
+  box-shadow: 0 12px 24px rgba(197, 142, 55, 0.18);
+  color: #815d2d;
+  transform: rotate(5deg);
+}
+
+.reflection-badge span {
+  margin-bottom: -16px;
+  font-size: 12px;
+}
+
+.reflection-badge strong {
+  margin: -3px 0;
+  font: 700 23px/1 "Trebuchet MS", "Noto Sans KR", sans-serif;
+}
+
+.reflection-path {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 34px 0 26px;
+}
+
+.reflection-path-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 9px;
+  align-items: center;
+  min-width: 150px;
+  color: #4f6878;
+}
+
+.reflection-path-step span {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #dcefeb;
+  color: #247b71;
+  font: 700 12px/1 "Trebuchet MS", sans-serif;
+}
+
+.reflection-path-step strong {
+  font-size: 14px;
+}
+
+.reflection-path-step small {
+  color: #8494a0;
+  font-size: 11px;
+}
+
+.reflection-path-step.is-second span {
+  background: #e7e1f3;
+  color: #755ca2;
+}
+
+.reflection-path-step.is-third span {
+  background: #ffe7b0;
+  color: #b4782c;
+}
+
+.reflection-path > i {
+  color: #a1bdc1;
+  font-size: 20px;
+  font-style: normal;
+}
+
+.reflection-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.reflection-card {
+  position: relative;
+  border: 1px solid #dce8e8;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 24px;
+}
+
+.reflection-card-1 {
+  box-shadow: inset 0 4px 0 #77c4b1;
+}
+
+.reflection-card-2 {
+  box-shadow: inset 0 4px 0 #a692d0;
+}
+
+.reflection-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.reflection-card-number {
+  color: #9eb6b5;
+  font: 700 12px/1 "Trebuchet MS", sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.reflection-card-period {
+  display: block;
+  color: #6b7e91;
+  font-size: 12px;
+}
+
+.reflection-card h3 {
+  margin: 4px 0 0;
+  color: #22577e;
+  font: 700 23px/1.2 "Trebuchet MS", "Noto Sans KR", sans-serif;
+}
+
+.reflection-card-status {
+  margin-left: auto;
+  border-radius: 999px;
+  background: #f2f5f5;
+  color: #8b999d;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 7px 10px;
+}
+
+.reflection-card-status.is-written {
+  background: #e5f4ee;
+  color: #2b856d;
+}
+
+.reflection-note-list {
+  margin-top: 20px;
+}
+
+.reflection-note {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 14px;
+  border-top: 1px dashed #dce8e8;
+  padding: 13px 0 0;
+  margin-top: 13px;
+}
+
+.reflection-note strong {
+  color: #65808b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.reflection-note p {
+  margin: 0;
+  color: #36566d;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.reflection-empty {
+  min-height: 114px;
+  margin: 20px 0 0;
+  border-radius: 15px;
+  background: #f6faf8;
+  color: #72868b;
+  line-height: 1.75;
+  padding: 16px;
+}
+
+.reflection-card-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  border: 0;
+  border-bottom: 1px solid #9dc8be;
+  background: transparent;
+  color: #277b70;
+  cursor: pointer;
+  font: 700 13px/1.4 "Trebuchet MS", "Noto Sans KR", sans-serif;
+  padding: 0 0 4px;
+}
+
+.reflection-card-button span {
+  transition: transform 0.2s ease;
+}
+
+.reflection-card-button:hover span,
+.reflection-card-button:focus-visible span {
+  transform: translateX(4px);
+}
+
+.reflection-closing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+  color: #718991;
+  font-size: 13px;
+}
+
+.reflection-closing span {
+  color: #5eaa78;
+  font-size: 21px;
+}
+
+.reflection-closing p {
+  margin: 0;
+}
+
 .growth-journal-panel {
   max-width: 1240px;
   margin: 0 auto 48px;
@@ -3409,6 +3729,83 @@ footer {
     flex: 1;
     padding-inline: 10px;
     font-size: 13px;
+  }
+
+  .journal-view-tabs {
+    gap: 8px;
+    margin-top: 20px;
+    padding: 0 16px;
+  }
+
+  .journal-view-tabs button {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+
+  .growth-reflection-panel {
+    margin-inline: 16px;
+    padding: 30px 18px 26px;
+    border-radius: 24px;
+  }
+
+  .reflection-hero {
+    display: block;
+  }
+
+  .reflection-hero h2 {
+    font-size: 32px;
+  }
+
+  .reflection-badge {
+    width: 96px;
+    height: 96px;
+    margin: 20px 0 0 auto;
+  }
+
+  .reflection-badge strong {
+    font-size: 18px;
+  }
+
+  .reflection-path {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+    align-items: start;
+  }
+
+  .reflection-path > i {
+    display: none;
+  }
+
+  .reflection-path-step {
+    display: block;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .reflection-path-step span {
+    margin: 0 auto 7px;
+  }
+
+  .reflection-path-step strong,
+  .reflection-path-step small {
+    display: block;
+  }
+
+  .reflection-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .reflection-note {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .reflection-closing {
+    align-items: flex-start;
+    text-align: center;
   }
 
   .growth-journal-panel {

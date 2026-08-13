@@ -175,7 +175,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.9.3";
+const APP_VERSION = "1.9.4";
 const periods: Period[] = ["april", "october", "january"];
 const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
 const growthTermLabels: Record<GrowthTerm, string> = {
@@ -529,7 +529,6 @@ function GrowthJournalPanel({
   answers,
   records,
   state,
-  onTermChange,
   onAnswerChange,
   onSave,
 }: {
@@ -537,15 +536,9 @@ function GrowthJournalPanel({
   answers: GrowthJournalAnswers;
   records: Partial<Record<GrowthTerm, GrowthJournalRecord>>;
   state: "idle" | "loading" | "saving" | "saved" | "error";
-  onTermChange: (term: GrowthTerm) => void;
   onAnswerChange: (questionId: string, value: string) => void;
   onSave: () => Promise<void>;
 }) {
-  const selectedAnswers = records[term]?.answers ?? {};
-  const hasSelectedSummary = growthJournalSummaryItems.some(({ key }) =>
-    String(selectedAnswers[key] ?? "").trim(),
-  );
-
   return (
     <section className="growth-journal-panel" id="growth-journal">
       <div className="section-kicker">CARE <span>교사 성장기록</span></div>
@@ -557,49 +550,6 @@ function GrowthJournalPanel({
           </p>
         </div>
         <span className="journal-status">{records[term] ? "기록 있음" : "아직 작성 전"}</span>
-      </div>
-      <div className="growth-summary" aria-labelledby="growth-summary-heading">
-        <div className="growth-summary-heading">
-          <div className="growth-summary-heading-main">
-            <span className="section-kicker">MY CARE FLOW</span>
-            <h3 id="growth-summary-heading">나의 성장 돌아보기</h3>
-          </div>
-          <div className="journal-term-tabs" role="tablist" aria-label="성장기록 기간">
-            {growthTerms.map((growthTerm) => (
-              <button
-                key={growthTerm}
-                type="button"
-                role="tab"
-                aria-selected={term === growthTerm}
-                className={term === growthTerm ? "active" : ""}
-                onClick={() => onTermChange(growthTerm)}
-              >
-                {growthTermLabels[growthTerm]}
-              </button>
-            ))}
-          </div>
-          <p>저장한 기록을 기간별로 한눈에 정리해 보세요.</p>
-        </div>
-        {hasSelectedSummary ? (
-          <div className="growth-summary-grid">
-            <article className="growth-summary-card" key={term}>
-              <h4>{growthTermLabels[term]}</h4>
-              <div className="growth-summary-items">
-                {growthJournalSummaryItems.map(({ key, label }) => {
-                  const value = String(selectedAnswers[key] ?? "").trim();
-                  return value ? (
-                    <div className="growth-summary-item" key={key}>
-                      <strong>{label}</strong>
-                      <p>{value}</p>
-                    </div>
-                  ) : null;
-                })}
-              </div>
-            </article>
-          </div>
-        ) : (
-          <p className="growth-summary-empty">이 기간의 기록을 저장하면 이곳에서 성장 흐름을 한눈에 볼 수 있어요.</p>
-        )}
       </div>
       <p className="journal-period-note">
         {term === "first_half"
@@ -632,6 +582,102 @@ function GrowthJournalPanel({
         </button>
         {state === "saved" && <p className="save-message success">성장기록이 저장되었습니다. 다른 기기에서도 확인할 수 있습니다.</p>}
         {state === "error" && <p className="save-message error">내용을 한 문항 이상 작성한 뒤 다시 저장해 주세요.</p>}
+      </div>
+    </section>
+  );
+}
+
+function GrowthSummaryPanel({
+  records,
+  onOpenJournal,
+}: {
+  records: Partial<Record<GrowthTerm, GrowthJournalRecord>>;
+  onOpenJournal: (term: GrowthTerm) => void;
+}) {
+  return (
+    <section className="growth-reflection-panel" id="growth-reflection">
+      <div className="reflection-sparkle reflection-sparkle-one" aria-hidden="true">✦</div>
+      <div className="reflection-sparkle reflection-sparkle-two" aria-hidden="true">·</div>
+      <div className="section-kicker">CARE <span>나의 성장 돌아보기</span></div>
+      <div className="reflection-hero">
+        <div>
+          <p className="reflection-eyebrow">작은 기록이 모여, 나만의 성장 이야기가 됩니다</p>
+          <h2>배움이 자라고 실천이 피어나는 시간</h2>
+          <p className="reflection-intro">
+            상반기와 하반기에 남긴 문장을 한곳에 모아 보세요. 잘한 일은 따뜻하게 간직하고,
+            다음 걸음은 가볍게 이어갈 수 있도록 정리했습니다.
+          </p>
+        </div>
+        <div className="reflection-badge" aria-label="성장 기록 안내">
+          <span>오늘도</span>
+          <strong>한 걸음</strong>
+          <span>성장 중</span>
+        </div>
+      </div>
+      <div className="reflection-path" aria-label="성장 기록 흐름">
+        <div className="reflection-path-step is-first">
+          <span>01</span>
+          <strong>배움의 씨앗</strong>
+          <small>상반기 기록</small>
+        </div>
+        <i aria-hidden="true">→</i>
+        <div className="reflection-path-step is-second">
+          <span>02</span>
+          <strong>실천의 잎</strong>
+          <small>하반기 기록</small>
+        </div>
+        <i aria-hidden="true">→</i>
+        <div className="reflection-path-step is-third">
+          <span>03</span>
+          <strong>다음의 꽃</strong>
+          <small>이어갈 성장</small>
+        </div>
+      </div>
+      <div className="reflection-cards">
+        {growthTerms.map((term, index) => {
+          const answers = records[term]?.answers ?? {};
+          const hasRecord = growthJournalSummaryItems.some(({ key }) =>
+            String(answers[key] ?? "").trim(),
+          );
+          return (
+            <article className={`reflection-card reflection-card-${index + 1}`} key={term}>
+              <div className="reflection-card-head">
+                <span className="reflection-card-number">0{index + 1}</span>
+                <div>
+                  <span className="reflection-card-period">{growthTermLabels[term]}</span>
+                  <h3>{term === "first_half" ? "배움의 씨앗" : "실천의 잎"}</h3>
+                </div>
+                <span className={`reflection-card-status ${hasRecord ? "is-written" : ""}`}>
+                  {hasRecord ? "기록 있음" : "기록 전"}
+                </span>
+              </div>
+              {hasRecord ? (
+                <div className="reflection-note-list">
+                  {growthJournalSummaryItems.map(({ key, label }) => {
+                    const value = String(answers[key] ?? "").trim();
+                    return value ? (
+                      <div className="reflection-note" key={key}>
+                        <strong>{label}</strong>
+                        <p>{value}</p>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              ) : (
+                <p className="reflection-empty">
+                  아직 이 계절의 기록이 없어요. 그때의 나에게 작은 메모를 남겨 보세요.
+                </p>
+              )}
+              <button type="button" className="reflection-card-button" onClick={() => onOpenJournal(term)}>
+                {hasRecord ? "기록 다시 살펴보기" : "이 기간 기록하기"} <span>→</span>
+              </button>
+            </article>
+          );
+        })}
+      </div>
+      <div className="reflection-closing">
+        <span aria-hidden="true">☘</span>
+        <p>성장은 완성하는 일이 아니라, 나를 다정하게 다시 바라보는 일입니다.</p>
       </div>
     </section>
   );
@@ -881,6 +927,7 @@ export default function Home() {
     Record<GrowthTerm, GrowthJournalAnswers>
   >({ first_half: {}, second_half: {} });
   const [growthJournalTerm, setGrowthJournalTerm] = useState<GrowthTerm>("first_half");
+  const [growthJournalView, setGrowthJournalView] = useState<GrowthTerm | "summary">("first_half");
   const [growthJournalState, setGrowthJournalState] = useState<
     "idle" | "loading" | "saving" | "saved" | "error"
   >("idle");
@@ -1113,6 +1160,8 @@ export default function Home() {
     setAnswersByPeriod(blankPeriods());
     setGrowthJournalRecords({});
     setGrowthJournalAnswers({ first_half: {}, second_half: {} });
+    setGrowthJournalTerm("first_half");
+    setGrowthJournalView("first_half");
     setActiveWorkspace("assessment");
     setJournalPromptTerm(null);
     setJournalSuccessTerm(null);
@@ -1265,6 +1314,7 @@ export default function Home() {
 
   function openGrowthJournal(term: GrowthTerm = growthJournalTerm) {
     setGrowthJournalTerm(term);
+    setGrowthJournalView(term);
     setActiveWorkspace("journal");
     setJournalPromptTerm(null);
     setGrowthJournalState("idle");
@@ -1731,18 +1781,55 @@ export default function Home() {
       />
         </>
       ) : (
-        <GrowthJournalPanel
-          term={growthJournalTerm}
-          answers={growthJournalAnswers[growthJournalTerm]}
-          records={growthJournalRecords}
-          state={growthJournalState}
-          onTermChange={(term) => {
-            setGrowthJournalTerm(term);
-            setGrowthJournalState("idle");
-          }}
-          onAnswerChange={setGrowthJournalAnswer}
-          onSave={saveGrowthJournal}
-        />
+        <div className="journal-workspace">
+          <div className="journal-view-tabs" role="tablist" aria-label="CARE 성장기록 보기">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={growthJournalView === "first_half"}
+              className={growthJournalView === "first_half" ? "active" : ""}
+              onClick={() => openGrowthJournal("first_half")}
+            >
+              상반기
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={growthJournalView === "second_half"}
+              className={growthJournalView === "second_half" ? "active" : ""}
+              onClick={() => openGrowthJournal("second_half")}
+            >
+              하반기
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={growthJournalView === "summary"}
+              className={growthJournalView === "summary" ? "active" : ""}
+              onClick={() => {
+                setGrowthJournalView("summary");
+                setJournalPromptTerm(null);
+              }}
+            >
+              나의 성장 돌아보기
+            </button>
+          </div>
+          {growthJournalView === "summary" ? (
+            <GrowthSummaryPanel
+              records={growthJournalRecords}
+              onOpenJournal={openGrowthJournal}
+            />
+          ) : (
+            <GrowthJournalPanel
+              term={growthJournalTerm}
+              answers={growthJournalAnswers[growthJournalTerm]}
+              records={growthJournalRecords}
+              state={growthJournalState}
+              onAnswerChange={setGrowthJournalAnswer}
+              onSave={saveGrowthJournal}
+            />
+          )}
+        </div>
       )}
       <footer>
         <span>대전양지초등학교 · 맞춤형 CARE 지원 모델</span>
