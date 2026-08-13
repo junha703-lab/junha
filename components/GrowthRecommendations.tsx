@@ -326,12 +326,14 @@ export default function GrowthRecommendations({
   complete,
   refreshKey,
   growthHighlight,
+  onPeriodChange,
 }: {
   sessionToken: string;
   period: Period;
   complete: boolean;
   refreshKey: number;
   growthHighlight: GrowthHighlight;
+  onPeriodChange: (period: Period) => void;
 }) {
   const [summary, setSummary] = useState<RecommendationSummary | null>(null);
   const [training, setTraining] =
@@ -476,7 +478,6 @@ export default function GrowthRecommendations({
   const additionalBooks = books.items
     .map((book, index) => ({ book, index }))
     .filter(({ index }) => index !== focusedBookIndex);
-  const previousGrowthScore = growthHighlight.score - growthHighlight.delta;
 
   return (
     <section
@@ -492,47 +493,29 @@ export default function GrowthRecommendations({
             다음에 보완할 역량에 맞춰 연수와 도서를 연결합니다.
           </p>
         </div>
-        {complete && (
-          <div
-            className={`growth-change-visual${growthHighlight.isBaseline ? " is-baseline" : ""}`}
-            aria-label={
-              growthHighlight.isBaseline
-                ? `4월 기준 역량 점수 ${growthHighlight.score.toFixed(2)}점`
-                : `${growthHighlight.previousLabel} ${previousGrowthScore.toFixed(2)}점에서 ${periodLabels[period]} ${growthHighlight.score.toFixed(2)}점으로 변화`
-            }
-          >
-            <span className="growth-change-label">
-              {growthHighlight.isBaseline
-                ? "4월 기준점"
-                : `${growthHighlight.previousLabel} 대비 변화`}
-            </span>
-            {growthHighlight.isBaseline ? (
-              <div className="growth-baseline-score">
-                <strong>{growthHighlight.score.toFixed(2)}</strong>
-                <span>/ 5점</span>
-              </div>
-            ) : (
-              <div className="growth-change-flow" aria-hidden="true">
-                <span>
-                  <small>{growthHighlight.previousLabel}</small>
-                  <strong>{previousGrowthScore.toFixed(2)}</strong>
-                </span>
-                <i>→</i>
-                <span className="is-current">
-                  <small>{periodLabels[period]}</small>
-                  <strong>{growthHighlight.score.toFixed(2)}</strong>
-                </span>
-              </div>
-            )}
-            <b
-              className={`growth-change-delta${growthHighlight.delta < 0 ? " is-negative" : ""}`}
-            >
-              {growthHighlight.isBaseline
-                ? "변화 측정의 시작점"
-                : `${growthHighlight.delta >= 0 ? "+" : ""}${growthHighlight.delta.toFixed(2)}점`}
-            </b>
+        <div className="diagnosis-period-selector">
+          <strong>조회 중인 진단</strong>
+          <div className="diagnosis-period-options" role="group" aria-label="조회할 진단 시기">
+            {(Object.keys(periodLabels) as Period[]).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={period === item ? "is-active" : ""}
+                aria-pressed={period === item}
+                onClick={() => onPeriodChange(item)}
+              >
+                {periodLabels[item]}
+              </button>
+            ))}
           </div>
-        )}
+          <div className="diagnosis-period-status" aria-live="polite">
+            <span>4월 <small>기준</small></span>
+            <i aria-hidden="true">→</i>
+            <span className="is-current">
+              {periodLabels[period]} <small>현재 선택</small>
+            </span>
+          </div>
+        </div>
       </div>
 
       {!complete ? (
@@ -548,12 +531,28 @@ export default function GrowthRecommendations({
               aria-hidden="true"
             />
             <div className="growth-highlight-head">
-              <span>현재 돋보이는 역량</span>
+              <span>
+                {growthHighlight.isBaseline
+                  ? "현재 돋보이는 역량"
+                  : `${growthHighlight.previousLabel}보다 변화가 가장 긍정적인 역량`}
+              </span>
               <strong>{growthHighlight.label}</strong>
             </div>
             <div className="growth-highlight-score">
-              <b>{growthHighlight.score.toFixed(2)}</b>
-              <span>/ 5점</span>
+              {growthHighlight.isBaseline ? (
+                <>
+                  <b>{growthHighlight.score.toFixed(2)}</b>
+                  <span>/ 5점</span>
+                </>
+              ) : (
+                <>
+                  <b>
+                    {growthHighlight.delta >= 0 ? "+" : ""}
+                    {growthHighlight.delta.toFixed(2)}
+                  </b>
+                  <span>점 변화</span>
+                </>
+              )}
             </div>
             <p>{growthHighlight.message}</p>
           </div>
@@ -563,7 +562,7 @@ export default function GrowthRecommendations({
               aria-hidden="true"
             />
             <div className="weakest-summary-copy">
-              <span>가장 보완이 필요한 역량</span>
+              <span>{periodLabels[period]} 기준 가장 보완이 필요한 역량</span>
               <strong>{summary.weakestLabel}</strong>
             </div>
             <div className="weakest-score">

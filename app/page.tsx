@@ -1066,7 +1066,7 @@ export default function Home() {
       }))
       .sort(
         (left, right) =>
-          right.skill.value - left.skill.value || right.delta - left.delta,
+          right.delta - left.delta || right.skill.value - left.skill.value,
       )[0];
 
     return {
@@ -1776,6 +1776,7 @@ export default function Home() {
           complete={responded === total}
           refreshKey={recommendationRefreshKey}
           growthHighlight={growthHighlight}
+          onPeriodChange={setActivePeriod}
         />
       ) : (
         <div className="journal-workspace">
