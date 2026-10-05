@@ -685,11 +685,21 @@ button {
   border-bottom: 0;
 }
 
-.question p {
-  margin: 0 0 10px;
-  color: #4f6075;
-  font-size: 11px;
+.question .question-title {
+  margin: 0 0 6px;
+  color: #243e5d;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1.55;
+}
+
+.question .question-indicator {
+  margin: 0 0 14px;
+  padding-left: 12px;
+  border-left: 2px solid #9bc5bb;
+  color: #4e706a;
+  font-size: 12px;
+  line-height: 1.65;
 }
 
 .likert {
@@ -4074,6 +4084,23 @@ footer {
 .journal-question strong {
   align-self: center;
   color: #314d69;
+  line-height: 1.55;
+}
+
+.journal-question-category {
+  display: block;
+  margin-bottom: 4px;
+  color: #2657ae;
+  font-size: 0.82em;
+  font-weight: 800;
+}
+
+.journal-question-hint {
+  display: block;
+  margin-top: 8px;
+  color: #63758a;
+  font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1.55;
 }
 

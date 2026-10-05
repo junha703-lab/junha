@@ -161,6 +161,25 @@ const dimensions: Dimension[] = [
   },
 ];
 
+const questionIndicators: Record<string, string> = {
+  "learning-0": "학생의 수준과 교육과정을 반영하여 재구성한 수업자료를 활용하며, 수업자료의 완성도가 높다.",
+  "learning-1": "학생 수준과 성취기준을 고려한 수업 흐름이 체계적으로 계획·운영된다.",
+  "learning-2": "학생 수준에 맞는 다양한 질문을 활용하며 사고와 참여를 이끌어낸다.",
+  "learning-3": "학생들이 학습활동과 과제에 적극 참여하도록 다양한 방법으로 지원한다.",
+  "learning-4": "학생 반응을 지속적으로 확인하고 피드백을 제공하며 수업을 적절히 조정한다.",
+  "learning-5": "평가 결과를 분석하며 수업이나 피드백에 반영한 사례가 확인된다.",
+  "guidance-0": "학생의 특성을 생활지도, 상담 등 다양한 방법을 통해 파악하고 교육활동에 적극 활용한다.",
+  "guidance-1": "학생 간 존중과 배려를 바탕으로 협력적인 학급문화를 조성한다.",
+  "guidance-2": "안전사고 및 학교폭력 예방교육을 계획적으로 실시하고 예방활동을 실천한다.",
+  "guidance-3": "학생들이 올바른 기본생활습관을 생활 속에서 실천하도록 지속적으로 지도한다.",
+  "professional-0": "연구활동의 결과를 교육활동에 적용하거나 동료 교원과 공유한다.",
+  "professional-1": "연수 내용을 교육활동에 적극 활용한다.",
+  "smart-0": "수업목표와 학생 특성에 적합한 다양한 자료와 매체를 효과적으로 활용한다.",
+  "culture-0": "학생의 적성과 특기를 고려한 맞춤형 교육환경을 제공한다.",
+  "empathy-0": "학생의 다양한 문제를 이해하고 소통하는 분위기를 형성하며, 지속적인 상담과 적절한 지원을 실시한다.",
+  "whole-0": "체육·놀이 등 다양한 활동을 통해 학생의 몸과 마음이 균형 있게 성장하도록 돕고, 건전한 가치관과 도덕성을 생활 속에서 실천하도록 지도한다.",
+};
+
 const likertLabels = [
   "전혀 그렇지 않다",
   "그렇지 않다",
@@ -175,37 +194,51 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.9.5";
+const APP_VERSION = "1.9.6";
 const periods: Period[] = ["april", "october", "january"];
 const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
 const growthTermLabels: Record<GrowthTerm, string> = {
   first_half: "상반기 CARE 성장기록 · 4~8월",
   second_half: "하반기 CARE 성장기록 · 10월~1월",
 };
-const growthJournalQuestions = [
+const sharedGrowthJournalQuestions = [
   {
     id: "learning",
-    label: "지금까지 참여한 연수·연구·공동체 활동 중 기억에 남거나 도움이 된 것은 무엇인가요?",
+    label: "학생의 수준과 반응을 고려해 수업을 계획·운영하면서 새롭게 시도하거나 개선한 점은 무엇인가요?",
+    summaryLabel: "학습지도",
+    hint: "교재 연구 · 수업계획 · 질문과 활동 · 이해도와 참여도 점검 · 평가 결과 활용",
   },
   {
     id: "practice",
-    label: "배운 내용을 바탕으로 수업이나 학생 지도에서 새롭게 시도한 것이 있나요?",
+    label: "학생의 특성을 고려해 친구 관계, 안전, 기본생활습관을 지도하면서 실제로 실천한 것은 무엇인가요?",
+    summaryLabel: "생활지도",
+    hint: "개별 특성 파악 · 친구 관계 · 안전·학교폭력 예방 · 기본생활습관",
   },
   {
     id: "change",
-    label: "그 과정에서 발견한 학생의 반응이나 작은 변화가 있다면 적어 주세요.",
-  },
-  {
-    id: "next",
-    label: "2월까지 더 실천해 보고 싶은 것은 무엇인가요?",
+    label: "개인 연수 및 연구, 교사 모임 등을 통해 배운 것 중 교육활동에 적용해 본 것은 무엇인가요?",
+    summaryLabel: "전문성 개발",
+    hint: "개인 연수 · 연구활동 · 교사 모임 · 배운 내용의 교육활동 적용",
   },
 ];
-const growthJournalSummaryItems = [
-  { key: "learning", label: "배운 것" },
-  { key: "practice", label: "새롭게 시도한 것" },
-  { key: "change", label: "학생의 변화" },
-  { key: "next", label: "이어가고 싶은 역량" },
-] as const;
+const growthJournalQuestions: Record<GrowthTerm, { id: string; label: string; summaryLabel: string; hint?: string }[]> = {
+  first_half: [
+    ...sharedGrowthJournalQuestions,
+    {
+      id: "next",
+      label: "미래스마트·예술문화·공감소통·전인적 성장과 관련해 실천한 것은 무엇인가요? 2월까지 더 키우고 싶은 역량도 함께 적어 주세요.",
+      summaryLabel: "우리 학교 CARE 역량",
+    },
+  ],
+  second_half: [
+    ...sharedGrowthJournalQuestions,
+    {
+      id: "next",
+      label: "미래스마트·예술문화·공감소통·전인적 성장과 관련해 실천한 것은 무엇인가요? 앞으로 더 키우고 싶은 역량도 함께 적어 주세요.",
+      summaryLabel: "우리 학교 CARE 역량",
+    },
+  ],
+};
 const periodLabels: Record<Period, string> = {
   april: "4월",
   october: "10월",
@@ -546,7 +579,9 @@ function GrowthJournalPanel({
         <div>
           <h2>배움과 실천을 이어가는 성장기록</h2>
           <p className="muted">
-            지금까지의 배움과 실천을 가볍게 돌아보는 기록입니다. 문항마다 한두 문장 정도로 편하게 작성해 주세요.
+            {term === "first_half"
+              ? "학습지도·생활지도·전문성 개발과 우리 학교 CARE 역량을 돌아봅니다. 각 영역에서 시도한 일을 실제 사례로 기록하고, 잘된 점과 아쉬웠던 점도 함께 살펴보세요."
+              : "지금까지의 배움과 실천을 돌아봅니다. 시도한 일을 실제 사례로 기록하고, 잘된 점과 아쉬웠던 점도 함께 살펴보세요."}
           </p>
         </div>
         <span className="journal-status">{records[term] ? "기록 있음" : "아직 작성 전"}</span>
@@ -557,15 +592,20 @@ function GrowthJournalPanel({
           : "10월부터 1월까지의 변화와 다음 실천을 기록합니다."}
       </p>
       <div className="journal-question-list">
-        {growthJournalQuestions.map((question, index) => (
+        {growthJournalQuestions[term].map((question, index) => (
           <label className="journal-question" key={question.id}>
             <span>{index + 1}</span>
             <strong>
-              {question.id === "next"
-                ? term === "first_half"
-                  ? "2월까지 더 키우고 싶은 역량은 무엇인가요?"
-                  : "앞으로도 계속 이어가고 싶은 역량은 무엇인가요?"
-                : question.label}
+              <span className="journal-question-category">{question.summaryLabel}</span>
+              {question.label}
+              {question.hint && (
+                <span
+                  className="journal-question-hint"
+                  style={{ display: "block", marginTop: 8, color: "#63758a", fontSize: "0.875rem", fontWeight: 400, lineHeight: 1.55 }}
+                >
+                  예시) {question.hint}
+                </span>
+              )}
             </strong>
             <textarea
               value={answers[question.id] ?? ""}
@@ -636,8 +676,8 @@ function GrowthSummaryPanel({
       <div className="reflection-cards">
         {growthTerms.map((term, index) => {
           const answers = records[term]?.answers ?? {};
-          const hasRecord = growthJournalSummaryItems.some(({ key }) =>
-            String(answers[key] ?? "").trim(),
+          const hasRecord = growthJournalQuestions[term].some(({ id }) =>
+            String(answers[id] ?? "").trim(),
           );
           return (
             <article className={`reflection-card reflection-card-${index + 1}`} key={term}>
@@ -653,11 +693,11 @@ function GrowthSummaryPanel({
               </div>
               {hasRecord ? (
                 <div className="reflection-note-list">
-                  {growthJournalSummaryItems.map(({ key, label }) => {
-                    const value = String(answers[key] ?? "").trim();
+                  {growthJournalQuestions[term].map(({ id, summaryLabel }) => {
+                    const value = String(answers[id] ?? "").trim();
                     return value ? (
-                      <div className="reflection-note" key={key}>
-                        <strong>{label}</strong>
+                      <div className="reflection-note" key={id}>
+                        <strong>{summaryLabel}</strong>
                         <p>{value}</p>
                       </div>
                     ) : null;
@@ -860,7 +900,7 @@ function AdminGrowthJournalSummary({
 }) {
   const savedTerms = growthTerms.filter((term) => {
     const answers = journals?.[term]?.answers;
-    return answers && growthJournalSummaryItems.some(({ key }) => String(answers[key] ?? "").trim());
+    return answers && growthJournalQuestions[term].some(({ id }) => String(answers[id] ?? "").trim());
   });
 
   return (
@@ -881,11 +921,11 @@ function AdminGrowthJournalSummary({
             return (
               <article className="admin-journal-card" key={term}>
                 <h4>{growthTermLabels[term]}</h4>
-                {growthJournalSummaryItems.map(({ key, label }) => {
-                  const value = String(answers[key] ?? "").trim();
+                {growthJournalQuestions[term].map(({ id, summaryLabel }) => {
+                  const value = String(answers[id] ?? "").trim();
                   return value ? (
-                    <div className="admin-journal-row" key={key}>
-                      <strong>{label}</strong>
+                    <div className="admin-journal-row" key={id}>
+                      <strong>{summaryLabel}</strong>
                       <p>{value}</p>
                     </div>
                   ) : null;
@@ -974,7 +1014,7 @@ export default function Home() {
     const answers = growthJournalRecords[term]?.answers;
     return Boolean(
       answers &&
-        growthJournalQuestions.some(({ id }) => String(answers[id] ?? "").trim()),
+        growthJournalQuestions[term].some(({ id }) => String(answers[id] ?? "").trim()),
     );
   }
 
@@ -1274,7 +1314,7 @@ export default function Home() {
       return;
     }
     const answers = growthJournalAnswers[growthJournalTerm];
-    if (!growthJournalQuestions.some(({ id }) => answers[id]?.trim())) {
+    if (!growthJournalQuestions[growthJournalTerm].some(({ id }) => answers[id]?.trim())) {
       setGrowthJournalState("error");
       return;
     }
@@ -1680,9 +1720,14 @@ export default function Home() {
                       const key = `${dimension.id}-${index}`;
                       return (
                         <div className="question" key={key}>
-                          <p>
+                          <p className="question-title">
                             {index + 1}. {item}
                           </p>
+                          {questionIndicators[key] && (
+                            <p className="question-indicator">
+                              {questionIndicators[key]}
+                            </p>
+                          )}
                           <div
                             className="likert"
                             role="radiogroup"
@@ -1864,8 +1909,8 @@ export default function Home() {
               {journalPromptTerm === "first_half" ? "상반기 성장기록을 남겨보세요" : "하반기 성장기록을 남겨보세요"}
             </h2>
             <p>
-              {growthTermLabels[journalPromptTerm]}에 대한 배움과 실천을 가볍게 돌아보는 기록입니다.
-              문항마다 한두 문장 정도로 편하게 작성해 주세요.
+              {growthTermLabels[journalPromptTerm]}에 대한 배움과 실천을 돌아보는 기록입니다.
+              시도한 일을 실제 사례로 기록하고, 잘된 점과 아쉬웠던 점도 함께 살펴보세요.
             </p>
             <div className="journal-modal-actions">
               <button type="button" className="sheet-button" onClick={() => openGrowthJournal(journalPromptTerm)}>
