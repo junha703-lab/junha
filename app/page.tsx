@@ -194,7 +194,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.9.6";
+const APP_VERSION = "1.9.7";
 const periods: Period[] = ["april", "october", "january"];
 const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
 const growthTermLabels: Record<GrowthTerm, string> = {
@@ -1458,6 +1458,22 @@ export default function Home() {
             처음 사용하는 이름은 입력한 비밀번호로 계정이 만들어집니다.
             이후 같은 이름과 비밀번호로 어느 기기에서나 기록을 불러옵니다.
           </small>
+          <div className="auth-qr">
+            <p>플랫폼 QR코드</p>
+            <a
+              href="https://junha-gray.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="교원역량개발지원 통합플랫폼 열기"
+            >
+              <img
+                src="/platform-qr.svg"
+                width={124}
+                height={124}
+                alt="교원역량개발지원 통합플랫폼 접속 QR코드"
+              />
+            </a>
+          </div>
           <div className="auth-version-meta" aria-label="앱 정보">
             <span>v.{APP_VERSION}</span>
             <span>앱개발자: 도준하</span>
