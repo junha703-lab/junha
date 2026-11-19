@@ -194,7 +194,9 @@ const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_SU2rYxPZhiqBHv83F7AI1w_HaQNt51A";
 const SESSION_KEY = "competency-session-token";
-const APP_VERSION = "1.9.7";
+const APP_VERSION = "1.9.8";
+const TEST_ACCOUNT_NAME = "테스트";
+const TEST_ACCOUNT_PIN = "1111";
 const periods: Period[] = ["april", "october", "january"];
 const growthTerms: GrowthTerm[] = ["first_half", "second_half"];
 const growthTermLabels: Record<GrowthTerm, string> = {
@@ -1046,7 +1048,9 @@ export default function Home() {
             await fetchAdminAccounts(savedToken);
           } else {
             const journals = await loadGrowthJournals(savedToken);
-            if (!journals.first_half) setJournalPromptTerm("first_half");
+            if (loaded.teacher_name !== TEST_ACCOUNT_NAME && !journals.first_half) {
+              setJournalPromptTerm("first_half");
+            }
           }
         }
       } catch {
@@ -1124,15 +1128,19 @@ export default function Home() {
   const responded = Object.values(answers).filter(Boolean).length;
   const total = Object.keys(answers).length;
 
-  async function enter(event: React.FormEvent) {
-    event.preventDefault();
-    const name = teacherName.trim();
+  async function signIn(nameInput: string, pinInput: string) {
+    const name = nameInput.trim();
     if (!name) {
       setLoginError("이름을 입력해 주세요.");
       return;
     }
-    if (!/^\d{3}$/.test(pin)) {
-      setLoginError("비밀번호는 숫자 3자리로 입력해 주세요.");
+    const isTestAccount = name === TEST_ACCOUNT_NAME;
+    if (!(isTestAccount ? /^\d{4}$/.test(pinInput) : /^\d{3}$/.test(pinInput))) {
+      setLoginError(
+        isTestAccount
+          ? "테스트 계정의 비밀번호는 숫자 4자리로 입력해 주세요."
+          : "비밀번호는 숫자 3자리로 입력해 주세요.",
+      );
       return;
     }
 
@@ -1141,7 +1149,7 @@ export default function Home() {
     try {
       const login = await callSupabaseRpc<LoginResponse>("teacher_login", {
         p_name: name,
-        p_pin: pin,
+        p_pin: pinInput,
       });
 
       if (!login.success || !login.session_token) {
@@ -1152,7 +1160,7 @@ export default function Home() {
         } else if (login.error === "INVALID_CREDENTIALS") {
           setLoginError("이름 또는 비밀번호가 올바르지 않습니다.");
         } else {
-          setLoginError("이름과 숫자 3자리 비밀번호를 확인해 주세요.");
+          setLoginError("이름과 비밀번호를 확인해 주세요.");
         }
         return;
       }
@@ -1171,7 +1179,9 @@ export default function Home() {
         await fetchAdminAccounts(login.session_token);
       } else {
         const journals = await loadGrowthJournals(login.session_token);
-        if (!journals.first_half) setJournalPromptTerm("first_half");
+        if (!isTestAccount && !journals.first_half) {
+          setJournalPromptTerm("first_half");
+        }
       }
       setPin("");
       setAuthenticated(true);
@@ -1180,6 +1190,11 @@ export default function Home() {
     } finally {
       setLoginState("idle");
     }
+  }
+
+  async function enter(event: React.FormEvent) {
+    event.preventDefault();
+    await signIn(teacherName, pin);
   }
 
   function clearSession() {
@@ -1433,13 +1448,17 @@ export default function Home() {
               비밀번호
               <input
                 inputMode="numeric"
-                maxLength={3}
+                maxLength={teacherName.trim() === TEST_ACCOUNT_NAME ? 4 : 3}
                 type="password"
                 value={pin}
                 onChange={(event) =>
                   setPin(event.target.value.replace(/\D/g, ""))
                 }
-                placeholder="숫자 3자리"
+                placeholder={
+                  teacherName.trim() === TEST_ACCOUNT_NAME
+                    ? "숫자 4자리"
+                    : "숫자 3자리"
+                }
               />
             </label>
             {loginError && <p className="login-error">{loginError}</p>}
@@ -1458,21 +1477,35 @@ export default function Home() {
             처음 사용하는 이름은 입력한 비밀번호로 계정이 만들어집니다.
             이후 같은 이름과 비밀번호로 어느 기기에서나 기록을 불러옵니다.
           </small>
-          <div className="auth-qr">
-            <p>플랫폼 QR코드</p>
-            <a
-              href="https://junha-gray.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="교원역량개발지원 통합플랫폼 열기"
-            >
-              <img
-                src="/platform-qr.svg"
-                width={124}
-                height={124}
-                alt="교원역량개발지원 통합플랫폼 접속 QR코드"
-              />
-            </a>
+          <div className="auth-shortcuts">
+            <div className="auth-qr">
+              <p>플랫폼 QR코드</p>
+              <a
+                href="https://junha-gray.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="교원역량개발지원 통합플랫폼 열기"
+              >
+                <img
+                  src="/platform-qr.svg"
+                  width={124}
+                  height={124}
+                  alt="교원역량개발지원 통합플랫폼 접속 QR코드"
+                />
+              </a>
+            </div>
+            <div className="auth-test-access">
+              <p>미리 살펴보기</p>
+              <button
+                type="button"
+                onClick={() => void signIn(TEST_ACCOUNT_NAME, TEST_ACCOUNT_PIN)}
+                disabled={loginState === "loading"}
+              >
+                <strong>테스트 버전으로 접속하기</strong>
+                <span>테스트 · 1111</span>
+                <small>공용 계정 · 개인정보 입력 금지</small>
+              </button>
+            </div>
           </div>
           <div className="auth-version-meta" aria-label="앱 정보">
             <span>v.{APP_VERSION}</span>
